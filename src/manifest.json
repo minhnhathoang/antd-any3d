@@ -1,6 +1,6 @@
 {
-  "name": "Any3D",
-  "short_name": "Any3D",
+  "name": "Any3D Portal",
+  "short_name": "Any3D Portal",
   "display": "standalone",
   "start_url": "./?utm_source=homescreen",
   "theme_color": "#002140",
