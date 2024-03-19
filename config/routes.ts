@@ -12,13 +12,30 @@
  */
 export default [
   {
-    path: '/user',
+    path: '/auth',
     layout: false,
     routes: [
       {
+        path: '/auth/login',
+        layout: false,
         name: 'login',
-        path: '/user/login',
-        component: './User/Login',
+        component: './auth/login',
+      },
+      {
+        path: '/auth',
+        redirect: '/auth/login',
+      },
+      {
+        name: 'register-result',
+        icon: 'smile',
+        path: '/auth/register-result',
+        component: './auth/register-result',
+      },
+      {
+        name: 'register',
+        icon: 'smile',
+        path: '/auth/register',
+        component: './auth/register',
       },
     ],
   },
