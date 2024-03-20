@@ -1,5 +1,5 @@
 import {Footer, Question, SelectLang, AvatarDropdown, AvatarName} from '@/components';
-import {LinkOutlined} from '@ant-design/icons';
+import {LinkOutlined, UserOutlined} from '@ant-design/icons';
 import type {Settings as LayoutSettings} from '@ant-design/pro-components';
 import {SettingDrawer} from '@ant-design/pro-components';
 import {RunTimeLayoutConfig} from '@umijs/max';
@@ -13,6 +13,7 @@ const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/auth/login';
 
 import type {RequestConfig} from 'umi';
+import {Avatar} from "antd";
 
 
 /**
@@ -57,6 +58,7 @@ export const layout: RunTimeLayoutConfig = ({initialState, setInitialState}) => 
     actionsRender: () => [<Question key="doc"/>, <SelectLang key="SelectLang"/>],
     avatarProps: {
       src: initialState?.currentUser?.avatar,
+      icon: <Avatar style={{backgroundColor: '#fde3cf', color: '#f56a00'}}>{initialState?.currentUser?.name?.charAt(0).toUpperCase()}</Avatar>,
       title: <AvatarName/>,
       render: (_, avatarChildren) => {
         return <AvatarDropdown>{avatarChildren}</AvatarDropdown>;
@@ -73,6 +75,7 @@ export const layout: RunTimeLayoutConfig = ({initialState, setInitialState}) => 
         history.push(loginPath);
       }
     },
+    locale: 'en-US',
     bgLayoutImgList: [
       {
         src: 'https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/D2LWSqNny4sAAAAAAAAAAAAAFl94AQBr',

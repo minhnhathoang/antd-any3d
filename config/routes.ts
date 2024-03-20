@@ -12,6 +12,36 @@
  */
 export default [
   {
+    path: '/admin',
+    name: 'content',
+    icon: 'edit',
+    access: 'canAdmin',
+    routes: [
+      {
+        path: '/admin/sub-page',
+        name: 'asset',
+        component: './Admin',
+      },
+      {
+        path: '/admin/sub-page',
+        name: 'metadata',
+        component: './Admin',
+      },
+      {
+        path: '/admin/sub-page',
+        name: 'editor',
+        component: './Admin',
+      },
+      {
+        icon: 'smile',
+        path: '/admin/sub-page',
+        name: 'access',
+        component: './Admin',
+      },
+    ],
+  },
+
+  {
     path: '/auth',
     layout: false,
     routes: [
@@ -76,5 +106,42 @@ export default [
     path: '*',
     layout: false,
     component: './404',
+  },
+
+  {
+    path: '/admin',
+    name: 'admin',
+    icon: 'edit',
+    access: 'canAdmin',
+    routes: [
+      {
+        path: '/admin',
+        redirect: '/admin/sub-page',
+      },
+      {
+        path: '/admin/sub-page',
+        name: 'sub-page',
+        component: './Admin',
+      },
+    ],
+  },
+
+  {
+    path: '/',
+    name: 'account',
+    icon: 'edit',
+    access: 'canAdmin',
+    routes: [
+      {
+        path: '/admin',
+        name: 'profile',
+        redirect: '/admin/sub-page',
+      },
+      {
+        path: '/admin/sub-page',
+        name: 'setting',
+        component: './Admin',
+      },
+    ],
   },
 ];
