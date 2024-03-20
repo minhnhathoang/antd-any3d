@@ -251,6 +251,7 @@ const Login: React.FC = () => {
         </LoginForm>
       </div>
 
+
       <Row gutter={[16, 16]}>
         <Col span={6} style={{height: '400px'}}>
           <Register/>
