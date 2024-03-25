@@ -342,9 +342,7 @@ function App() {
       <color attach="background" args={["#ffffff"]} />
       <PresentationControls speed={1.5} global zoom={0.1} polar={[-0.1, Math.PI / 4]}>
         <Stage environment={"sunset"}>
-          {/* Add multiple models here */}
-          <Model path="/threlte.glb" scale={0.002} />
-          {/* Add as many models as needed */}
+          <Model path="http://localhost:9000/common/model.gltf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20240325%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240325T100352Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=0dc31effb9f4409f82bdf2a3402caccd61d4fdcf4862a6f68bdb67a54e50de87" scale={0.002} />
         </Stage>
       </PresentationControls>
     </Canvas>

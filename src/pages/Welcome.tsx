@@ -1,7 +1,18 @@
-import { PageContainer } from '@ant-design/pro-components';
-import { useModel } from '@umijs/max';
-import { Card, theme } from 'antd';
+import {PageContainer} from '@ant-design/pro-components';
+import {useModel} from '@umijs/max';
+import {Card, theme} from 'antd';
 import React from 'react';
+
+import {EditOutlined, EllipsisOutlined, SettingOutlined} from '@ant-design/icons';
+import {Avatar} from 'antd';
+import {Environment, OrbitControls, PerspectiveCamera, PivotControls, Preload, View} from "@react-three/drei";
+import {Canvas} from "@react-three/fiber";
+import {Test} from "./Test.js";
+import {Model3d} from "@/components/CardModel"
+import AssetCard from "@/pages/content/asset/components/AssetCard";
+
+
+const {Meta} = Card;
 
 /**
  * 每个单独的卡片，为了复用样式抽成了组件
@@ -13,10 +24,11 @@ const InfoCard: React.FC<{
   index: number;
   desc: string;
   href: string;
-}> = ({ title, href, index, desc }) => {
-  const { useToken } = theme;
+}> = ({title, href, index, desc}) => {
+  const {useToken} = theme;
 
-  const { token } = useToken();
+  const {token} = useToken();
+
 
   return (
     <div
@@ -84,8 +96,8 @@ const InfoCard: React.FC<{
 };
 
 const Welcome: React.FC = () => {
-  const { token } = theme.useToken();
-  const { initialState } = useModel('@@initialState');
+  const {token} = theme.useToken();
+  const {initialState} = useModel('@@initialState');
   return (
     <PageContainer>
       <Card
@@ -136,6 +148,41 @@ const Welcome: React.FC = () => {
               gap: 16,
             }}
           >
+            <Card
+              style={{width: 300}}
+              cover={
+                <Test></Test>
+              }
+              actions={[
+                <SettingOutlined key="setting"/>,
+                <EditOutlined key="edit"/>,
+                <EllipsisOutlined key="ellipsis"/>,
+              ]}
+            >
+              <Meta
+                avatar={<Avatar src="https://api.dicebear.com/7.x/miniavs/svg?seed=8"/>}
+                title="Card title"
+                description="This is the description"
+              />
+            </Card>
+
+            <View className="view scale" style={{height: 300, width: 300}}>
+              <Common color="lightgray"/>
+              <Model3d
+                path="http://localhost:9000/common/model.gltf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20240325%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240325T100352Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=0dc31effb9f4409f82bdf2a3402caccd61d4fdcf4862a6f68bdb67a54e50de87"
+                position={[0, 1, 0]} scale={1}/>
+              <OrbitControls makeDefault/>
+            </View>
+
+            <AssetCard
+              fileName={"test.png"}
+              fileSize={'123.03 MB'}
+              url={"https://picsum.photos/200/300"}
+              className="view scale"
+              style={{height: 300, width: 300}}
+            />
+
+
             <InfoCard
               index={1}
               href="https://umijs.org/docs/introduce/introduce"
@@ -154,29 +201,28 @@ const Welcome: React.FC = () => {
               href="https://procomponents.ant.design"
               desc="ProComponents 是一个基于 Ant Design 做了更高抽象的模板组件，以 一个组件就是一个页面为开发理念，为中后台开发带来更好的体验。"
             />
-            <InfoCard
-              index={4}
-              title="了解 Pro Components"
-              href="https://procomponents.ant.design"
-              desc="ProComponents 是一个基于 Ant Design 做了更高抽象的模板组件，以 一个组件就是一个页面为开发理念，为中后台开发带来更好的体验。"
-            />
-            <InfoCard
-              index={5}
-              title="了解 Pro Components"
-              href="https://procomponents.ant.design"
-              desc="ProComponents 是一个基于 Ant Design 做了更高抽象的模板组件，以 一个组件就是一个页面为开发理念，为中后台开发带来更好的体验。"
-            />
-            <InfoCard
-              index={6}
-              title="了解 Pro Components"
-              href="https://procomponents.ant.design"
-              desc="Pro"
-            />
           </div>
         </div>
+
+
       </Card>
     </PageContainer>
-  );
+);
 };
+
+function Common({
+  color
+}) {
+  return (
+    <>
+      {color && <color attach="background" args={[color]}/>}
+      <ambientLight intensity={0.5}/>
+      <pointLight position={[20, 30, 10]} intensity={1}/>
+      <pointLight position={[-10, -10, -10]} color="blue"/>
+      <Environment preset="dawn"/>
+      <PerspectiveCamera makeDefault fov={40} position={[0, 0, 6]}/>
+    </>
+  )
+}
 
 export default Welcome;

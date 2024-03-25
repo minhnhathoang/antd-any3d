@@ -20,24 +20,24 @@ export default [
       {
         path: '/admin/sub-page',
         name: 'asset',
-        component: './Admin',
+        component: './content/asset',
       },
       {
-        path: '/admin/sub-page',
+        path: '/admin/assets',
         name: 'metadata',
-        component: './Admin',
+        component: './projects',
       },
-      {
-        path: '/admin/sub-page',
-        name: 'editor',
-        component: './Admin',
-      },
-      {
-        icon: 'smile',
-        path: '/admin/sub-page',
-        name: 'access',
-        component: './Admin',
-      },
+      // {
+      //   path: '/admin/sub-page',
+      //   name: 'editor',
+      //   component: './Admin',
+      // },
+      // {
+      //   icon: 'smile',
+      //   path: '/admin/sub-page',
+      //   name: 'access',
+      //   component: './Admin',
+      // },
     ],
   },
 

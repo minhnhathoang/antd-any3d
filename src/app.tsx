@@ -14,6 +14,8 @@ const loginPath = '/auth/login';
 
 import type {RequestConfig} from 'umi';
 import {Avatar} from "antd";
+import {Canvas} from "@react-three/fiber";
+import {Preload, View} from "@react-three/drei";
 
 
 /**
@@ -126,6 +128,13 @@ export const layout: RunTimeLayoutConfig = ({initialState, setInitialState}) => 
               }}
             />
           )}
+
+          <Canvas
+            style={{position: 'fixed', top: 0, bottom: 0, left: 0, right: 0}}
+            eventSource={document.getElementById('root')}>
+            <View.Port/>
+            <Preload all/>
+          </Canvas>
         </>
       );
     },
