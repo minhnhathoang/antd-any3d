@@ -201,6 +201,24 @@ const Welcome: React.FC = () => {
               href="https://procomponents.ant.design"
               desc="ProComponents 是一个基于 Ant Design 做了更高抽象的模板组件，以 一个组件就是一个页面为开发理念，为中后台开发带来更好的体验。"
             />
+            <InfoCard
+              index={4}
+              title="了解 Pro Components"
+              href="https://procomponents.ant.design"
+              desc="ProComponents 是一个基于 Ant Design 做了更高抽象的模板组件，以 一个组件就是一个页面为开发理念，为中后台开发带来更好的体验。"
+            />
+            <InfoCard
+              index={5}
+              title="了解 Pro Components"
+              href="https://procomponents.ant.design"
+              desc="ProComponents 是一个基于 Ant Design 做了更高抽象的模板组件，以 一个组件就是一个页面为开发理念，为中后台开发带来更好的体验。"
+            />
+            <InfoCard
+              index={6}
+              title="了解 Pro Components"
+              href="https://procomponents.ant.design"
+              desc="Pro"
+            />
           </div>
         </div>
 
