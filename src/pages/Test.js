@@ -17,7 +17,7 @@ export function Test() {
     <>
           <View className="view scale" style={{height: 300, width: 300}}>
             <Common color="lightgray"/>
-            <Model3d path="http://localhost:9000/common/model.gltf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20240325%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240325T100352Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=0dc31effb9f4409f82bdf2a3402caccd61d4fdcf4862a6f68bdb67a54e50de87" position={[0, 1, 0]} scale={1}/>
+            <Model3d path="http://localhost:9000/common/model.gltf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20240325%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240325T100352Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=0dc31effb9f4409f82bdf2a3402caccd61d4fdcf4862a6f68bdb67a54e50de87"/>
             <OrbitControls makeDefault/>
           </View>
     </>

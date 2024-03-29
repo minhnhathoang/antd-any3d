@@ -21,7 +21,7 @@ export default {
   'pages.login.forgotPassword': 'Forgot Password ?',
   'pages.login.submit': 'Login',
   'pages.login.loginWith': 'Login with :',
-  'pages.login.registerAccount': 'Register Account',
+  'pages.register': 'Register Account',
   'pages.signUp': 'Sign up',
   'pages.welcome.link': 'Welcome',
   'pages.welcome.alertMessage': 'Faster and stronger heavy-duty components have been released.',

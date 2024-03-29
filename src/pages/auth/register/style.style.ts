@@ -40,6 +40,21 @@ const useStyles = createStyles(({ token }) => {
     'progress-pass > .progress': {
       '.ant-progress-bg': { backgroundColor: token.colorWarning },
     },
+    container: {
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      overflow: 'auto',
+      backgroundImage:
+        "url('https://mdn.alipayobjects.com/yuyan_qk0oxh/afts/img/V-_oS6r-i7wAAAAAAAAAAAAAFl94AQBr')",
+      backgroundSize: '100% 100%',
+    },
+    logo: {
+      width: '44px',
+      height: '44px',
+      marginInlineEnd: '16px',
+      verticalAlign: 'top',
+    }
   };
 });
 

@@ -1,5 +1,5 @@
 import {useState, useRef, useMemo} from 'react'
-import {useGLTF} from '@react-three/drei'
+import {Center, GizmoHelper, GizmoViewcube, GizmoViewport, Resize, useGLTF} from '@react-three/drei'
 import {useFrame} from '@react-three/fiber'
 
 export function Soda(props) {
@@ -63,5 +63,31 @@ export function Model3d(props) {
   }, [model]);
 
   useFrame((state, delta) => (scene.rotation.y += delta));
-  return <primitive object={scene} {...props} />;
+  return (
+    <Center>
+      <Resize scale={1}>
+        <primitive object={scene} {...props} />
+      </Resize>
+    </Center>
+  );
+}
+
+export function ModelAndTarget(props) {
+  const {path} = props;
+  const model = useGLTF(path);
+
+  const scene = useMemo(() => {
+    return model.scene.clone();
+  }, [model]);
+
+  useFrame((state, delta) => (scene.rotation.y += delta));
+  return (
+    <GizmoHelper
+      alignment="bottom-right"
+      margin={[80, 80]}
+    >
+      <GizmoViewport axisColors={['red', 'green', 'blue']} labelColor="black"/>
+      <GizmoViewcube/>
+    </GizmoHelper>
+  );
 }
