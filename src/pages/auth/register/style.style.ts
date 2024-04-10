@@ -23,7 +23,7 @@ const useStyles = createStyles(({ token }) => {
       justifyContent: 'space-between',
     },
     submit: {
-      width: '50%',
+      width: '100%',
     },
     success: {
       transition: 'color 0.3s',

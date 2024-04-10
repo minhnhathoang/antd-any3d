@@ -1,13 +1,19 @@
-// @ts-ignore
-/* eslint-disable */
-import { request } from '@umijs/max';
+import {request} from '@umijs/max';
 
-export async function currentUser(options?: { [key: string]: any }) {
-  return request<{
-    data: API.CurrentUser;
-  }>(`/api/users/me/profile`, {
-    method: 'GET',
+export async function login(body: AuthLoginQry, options?: { [key: string]: any }) {
+  return request<BaseResponse<AuthLoginCO>>('/api/auth/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
     ...(options || {}),
+  }).then((response) => {
+    if (response.success && response.data) {
+      localStorage.clear();
+      localStorage.setItem('accessToken', response.data.accessToken.value);
+    }
+    return response;
   });
 }
 
@@ -20,16 +26,20 @@ export async function logout(options?: { [key: string]: any }) {
   });
 }
 
-export async function login(body: API.LoginParams, options?: { [key: string]: any }) {
-  return request<API.Response<API.LoginResult>>('/api/auth/login', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    data: body,
+export async function getCurrentUser(options?: { [key: string]: any }) {
+  return request<BaseResponse<UserCO>>(`/api/users/me`, {
+    method: 'GET',
     ...(options || {}),
   });
 }
+
+export async function getCurrentUserProfile(options?: { [key: string]: any }) {
+  return request<BaseResponse<UserProfileCO>>(`/api/user-profiles/me`, {
+    method: 'GET',
+    ...(options || {}),
+  });
+}
+
 
 /** 此处后端没有提供注释 GET /api/notices */
 export async function getNotices(options?: { [key: string]: any }) {
@@ -63,7 +73,7 @@ export async function rule(
 export async function updateRule(options?: { [key: string]: any }) {
   return request<API.RuleListItem>('/api/rule', {
     method: 'POST',
-    data:{
+    data: {
       method: 'update',
       ...(options || {}),
     }
@@ -74,7 +84,7 @@ export async function updateRule(options?: { [key: string]: any }) {
 export async function addRule(options?: { [key: string]: any }) {
   return request<API.RuleListItem>('/api/rule', {
     method: 'POST',
-    data:{
+    data: {
       method: 'post',
       ...(options || {}),
     }
@@ -85,7 +95,7 @@ export async function addRule(options?: { [key: string]: any }) {
 export async function removeRule(options?: { [key: string]: any }) {
   return request<Record<string, any>>('/api/rule', {
     method: 'POST',
-    data:{
+    data: {
       method: 'delete',
       ...(options || {}),
     }

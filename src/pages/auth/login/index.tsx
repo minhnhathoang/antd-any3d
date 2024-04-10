@@ -1,5 +1,4 @@
 import {Footer} from '@/components';
-import {login} from '@/services/ant-design-pro/api';
 import {
   LockOutlined,
   UserOutlined,
@@ -9,14 +8,14 @@ import {
   ProFormCheckbox,
   ProFormText,
 } from '@ant-design/pro-components';
-import {FormattedMessage, history, SelectLang, useIntl, useModel, Helmet} from '@umijs/max';
-import {Alert, Col, message, Row, Tabs} from 'antd';
-import Settings from '../../../../config/defaultSettings';
-import React, {useState} from 'react';
+import {FormattedMessage, history, SelectLang, useIntl, useModel} from '@umijs/max';
+import {Alert, message, Tabs} from 'antd';
+import React, { useState} from 'react';
 import {flushSync} from 'react-dom';
 import {createStyles} from 'antd-style';
-import Register from "@/pages/auth/register";
-import Auth from "@/pages/auth";
+import TitleLogo from "@/components/TitleLogo";
+import {Link} from "@@/exports";
+import {login} from "@/services/ant-design-pro/api";
 
 const useStyles = createStyles(({token}) => {
   return {
@@ -80,65 +79,60 @@ const LoginMessage: React.FC<{
 };
 
 const Login: React.FC = () => {
-  const [userLoginState, setUserLoginState] = useState<API.Response<API.LoginResult>>({});
   const [type, setType] = useState<string>('account');
+  const [status, setStatus] = useState<boolean>(true);
   const {initialState, setInitialState} = useModel('@@initialState');
   const {styles} = useStyles();
   const intl = useIntl();
 
-  const fetchUserInfo = async () => {
-    const userInfo = await initialState?.fetchUserInfo?.();
-    if (userInfo) {
+  const fetchCurrentUser = async () => {
+    const currentUser = await initialState?.fetchCurrentUser?.();
+    if (currentUser) {
       flushSync(() => {
         setInitialState((s) => ({
           ...s,
-          currentUser: userInfo,
+          currentUser: currentUser
         }));
       });
-      console.log('Fetched user info:', userInfo);
+      console.log('Fetched current user:', currentUser);
     }
   };
 
-  const handleSubmit = async (values: API.LoginParams) => {
+  const fetchCurrentUserProfile = async () => {
+    const currentUserProfile = await initialState?.fetchCurrentUserProfile?.();
+    if (currentUserProfile) {
+      flushSync(() => {
+        setInitialState((s) => ({
+          ...s,
+          currentUserProfile: currentUserProfile
+        }));
+      });
+      console.log('Fetched current user profile:', currentUserProfile);
+    }
+  };
+
+  const handleSubmit = async (values: AuthLoginQry) => {
     try {
-      const msg = await login({...values, type});
+      const msg = await login({...values});
       if (msg.success) {
         const defaultLoginSuccessMessage = intl.formatMessage({
           id: 'pages.login.success',
-          defaultMessage: '登录成功！',
+          defaultMessage: 'Login success!',
         });
         message.success(defaultLoginSuccessMessage);
-
-        localStorage.setItem('accessToken', msg.data.accessToken.value); // Lưu trữ token trong Local Storage
-
-        await fetchUserInfo();
+        await fetchCurrentUser();
+        await fetchCurrentUserProfile();
         const urlParams = new URL(window.location.href).searchParams;
         history.push(urlParams.get('redirect') || '/');
         return;
       }
-      console.log(msg);
-      // 如果失败去设置用户错误信息
-      setUserLoginState(msg.success);
-    } catch (error) {
-      const defaultLoginFailureMessage = intl.formatMessage({
-        id: 'pages.login.failure',
-      });
-      console.log(error);
-      message.error(defaultLoginFailureMessage);
+    } catch (error: any) {
+      setStatus(false);
     }
   };
-  const {status, type: loginType} = userLoginState;
 
   return (
     <div className={styles.container}>
-      <Helmet>
-        <title>
-          {intl.formatMessage({
-            id: 'menu.login',
-          })}
-          - {Settings.title}
-        </title>
-      </Helmet>
       <Lang/>
       <div
         style={{
@@ -152,14 +146,27 @@ const Login: React.FC = () => {
             maxWidth: '75vw',
           }}
           logo={<img alt="logo" src="/logo.svg"/>}
-          title="Any3D Portal"
+          title={<TitleLogo/>}
           subTitle={intl.formatMessage({id: 'pages.layouts.userLayout.title'})}
           initialValues={{
             autoLogin: true,
           }}
           onFinish={async (values) => {
-            await handleSubmit(values as API.LoginParams);
+            await handleSubmit(values as AuthLoginQry)
           }}
+          actions={
+            <ProFormText style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <p style={{display: 'inline-block', marginRight: '10px'}}>
+                Don&apos;t have an account yet?
+              </p>
+              <Link
+                to="/auth/register"
+                style={{display: 'inline-block', textAlign: 'center'}}
+              >
+                <span>Sign up</span>
+              </Link>
+            </ProFormText>
+          }
         >
           <Tabs
             activeKey={type}
@@ -175,15 +182,15 @@ const Login: React.FC = () => {
               }
             ]}
           />
-
-          {status === false && loginType === 'account' && (
+          {status === false && (
             <LoginMessage
               content={intl.formatMessage({
                 id: 'pages.login.accountLogin.errorMessage',
-                defaultMessage: '账户或密码错误(admin/ant.design)',
+                defaultMessage: 'Login failed, please check your username and password.',
               })}
             />
           )}
+
           {type === 'account' && (
             <>
               <ProFormText
@@ -232,6 +239,7 @@ const Login: React.FC = () => {
               />
             </>
           )}
+
           <div
             style={{
               marginBottom: 24,
@@ -249,6 +257,7 @@ const Login: React.FC = () => {
             </a>
           </div>
         </LoginForm>
+
       </div>
       <Footer/>
     </div>

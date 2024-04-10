@@ -6,7 +6,7 @@ import {RunTimeLayoutConfig} from '@umijs/max';
 import {history, Link} from '@umijs/max';
 import defaultSettings from '../config/defaultSettings';
 import {errorConfig} from './requestErrorConfig';
-import {currentUser as queryCurrentUser} from '@/services/ant-design-pro/api';
+import {getCurrentUser, getCurrentUserProfile} from '@/services/ant-design-pro/api';
 import React from 'react';
 
 const isDev = process.env.NODE_ENV === 'development';
@@ -17,19 +17,30 @@ import {Avatar} from "antd";
 import {Canvas} from "@react-three/fiber";
 import {View} from "@react-three/drei";
 
-
 /**
- * @see  https://umijs.org/zh-CN/plugins/plugin-initial-state
+ * @see https://umijs.org/zh-CN/plugins/plugin-initial-state
  * */
 export async function getInitialState(): Promise<{
   settings?: Partial<LayoutSettings>;
-  currentUser?: API.CurrentUser;
+  currentUser?: UserCO;
+  currentUserProfile?: UserProfileCO;
   loading?: boolean;
-  fetchUserInfo?: () => Promise<API.CurrentUser | undefined>;
+  fetchCurrentUser?: () => Promise<UserCO | undefined>;
+  fetchCurrentUserProfile?: () => Promise<UserProfileCO | undefined>;
 }> {
-  const fetchUserInfo = async () => {
+  const fetchCurrentUserProfile = async () => {
     try {
-      const msg = await queryCurrentUser({
+      const msg = await getCurrentUserProfile();
+      return msg.data;
+    } catch (error) {
+
+    }
+    return undefined;
+  };
+
+  const fetchCurrentUser = async () => {
+    try {
+      const msg = await getCurrentUser({
         skipErrorHandler: true,
       });
       return msg.data;
@@ -38,18 +49,22 @@ export async function getInitialState(): Promise<{
     }
     return undefined;
   };
-  // 如果不是登录页面，执行
+
   const {location} = history;
   if (![loginPath, '/auth/register', '/auth/register-result'].includes(location.pathname)) {
-    const currentUser = await fetchUserInfo();
+    const currentUser = await fetchCurrentUser();
+    const currentUserProfile = await fetchCurrentUserProfile();
     return {
-      fetchUserInfo,
+      fetchCurrentUser,
+      fetchCurrentUserProfile,
       currentUser,
+      currentUserProfile,
       settings: defaultSettings as Partial<LayoutSettings>,
     };
   }
   return {
-    fetchUserInfo,
+    fetchCurrentUserProfile,
+    fetchCurrentUser,
     settings: defaultSettings as Partial<LayoutSettings>,
   };
 }
@@ -59,24 +74,20 @@ export const layout: RunTimeLayoutConfig = ({initialState, setInitialState}) => 
   return {
     actionsRender: () => [<Question key="doc"/>, <SelectLang key="SelectLang"/>],
     avatarProps: {
-      src: initialState?.currentUser?.avatar,
+      src: initialState?.currentUserProfile?.avatar,
       icon: <Avatar style={{
         backgroundColor: '#fde3cf',
-        color: '#f56a00'
-      }}>{initialState?.currentUser?.name?.charAt(0).toUpperCase()}</Avatar>,
+        color: '#d27e0e'
+      }}><b>{initialState?.currentUser?.username?.charAt(0).toUpperCase()}</b></Avatar>,
       title: <AvatarName/>,
       render: (_, avatarChildren) => {
-
         return <AvatarDropdown>{avatarChildren}</AvatarDropdown>;
       },
     },
-    // waterMarkProps: {
-    //   content: initialState?.currentUser?.name,
-    // },
+
     footerRender: () => <Footer/>,
     onPageChange: () => {
       const {location} = history;
-      // 如果没有登录，重定向到 login
       if (!initialState?.currentUser && location.pathname !== loginPath) {
         history.push(loginPath);
       }
@@ -148,17 +159,24 @@ export const layout: RunTimeLayoutConfig = ({initialState, setInitialState}) => 
 };
 
 const authHeaderInterceptor = (url: string, options: RequestConfig) => {
-  return {
-    url,
-    options: {
-      ...options,
-      interceptors: true,
-      headers: {...options.headers, Authorization: `Bearer ${localStorage.getItem('accessToken')}`}
-    },
-  };
+  const accessToken = localStorage.getItem('accessToken');
+
+  if (accessToken) {
+    return {
+      url,
+      options: {
+        ...options,
+        interceptors: true,
+        headers: {...options.headers, Authorization: `Bearer ${accessToken}`}
+      },
+    };
+  }
+
+  return {url, options};
 };
+
 
 export const request: RequestConfig = {
   ...errorConfig,
-  requestInterceptors: [authHeaderInterceptor],
+  requestInterceptors: [authHeaderInterceptor]
 };

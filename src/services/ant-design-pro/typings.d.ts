@@ -1,6 +1,39 @@
 // @ts-ignore
 /* eslint-disable */
 
+type BaseResponse<T> = {
+  success: boolean;
+  errCode: string;
+  errMessage: string;
+  data?: T;
+}
+
+type AuthLoginQry = {
+  username: string;
+  password: string;
+}
+
+type AccessToken = {
+  value: string;
+}
+
+type AuthLoginCO = {
+  accessToken: AccessToken;
+}
+
+type UserCO = {
+  userId: number;
+  username: string;
+  email: string;
+}
+
+type UserProfileCO = {
+  name?: string;
+  avatar?: string;
+  phone?: string;
+  address?: string;
+}
+
 declare namespace API {
   type Response<T> = {
     success: boolean;
