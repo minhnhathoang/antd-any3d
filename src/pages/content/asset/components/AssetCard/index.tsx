@@ -19,13 +19,15 @@ import {
   View
 } from "@react-three/drei";
 
+
 import {Model3d, ModelAndTarget} from "@/components/CardModel"
-import useStyles from "@/pages/projects/style.style";
+import useStyles from "@/pages/project/style.style";
 import {Duck} from "@/components/ModelCard/models";
 import dayjs from "dayjs";
 import AvatarList from "@/pages/projects/components/AvatarList";
 import moment from "moment/moment";
 import {Canvas} from "@react-three/fiber";
+import { ModalForm } from "@ant-design/pro-components";
 
 const {Paragraph} = Typography;
 
@@ -54,7 +56,7 @@ const AssetCard: React.FC<{
                 <View className="view" style={{height: 250, width: 300, margin: 10}}>
                   <Common color="lightgray"/>
                   <Model3d
-                    path="http://localhost:9000/common/model.gltf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20240326%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240326T140234Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=bb6c92f3d23cddcfc4f7d059d38be2b4d954937d93a14a0c357ff08c120c44bd"
+                    path="http://127.0.0.1:9000/common/model.gltf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=R4O9G1T7UA63H8DPH00X%2F20240414%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240414T082657Z&X-Amz-Expires=43200&X-Amz-Security-Token=eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NLZXkiOiJSNE85RzFUN1VBNjNIOERQSDAwWCIsImV4cCI6MTcxMzEyNjQwMywicGFyZW50IjoibWluaW9hZG1pbiJ9.PStNab9tkbWep3oAK3p4Cph1AMerzU-Ij8bZwHYfF2lLzpfFIb0E4seRSLexq57n27i8livQWNW48R0hlKMAqA&X-Amz-SignedHeaders=host&versionId=418338c3-d7f3-4322-87b0-164d0cce1f49&X-Amz-Signature=07f796598f3858632fd658d23c95af4695caddb780ad32508020c2996e2eedd0"
                     position={[0, 1, 0]} scale={1}/>
                   <OrbitControls/>
                 </View>
@@ -83,28 +85,71 @@ const AssetCard: React.FC<{
           <span>{dayjs().subtract(3, 'day').fromNow()}</span>
         </div>
 
-        <Modal
-          title={fileName}
-          centered
-          open={open}
-          onOk={() => setOpen(false)}
-          onCancel={() => setOpen(false)}
-          width={900}
-          forceRender
+        {/*<Modal*/}
+        {/*  title={fileName}*/}
+        {/*  centered*/}
+        {/*  open={open}*/}
+        {/*  onOk={() => setOpen(false)}*/}
+        {/*  onCancel={() => setOpen(false)}*/}
+        {/*  width={900}*/}
+        {/*  forceRender*/}
+        {/*>*/}
+        {/*  <p>some contentsdddddddddddddddddddđ...</p>*/}
+        {/*  <p>some contents.dddddddddddddddsâdsads..</p>*/}
+        {/*  <View className="view" style={{height: 250, width: 300, margin: 10}}>*/}
+        {/*    <Common color="lightgray"/>*/}
+        {/*    <Model3d*/}
+        {/*      path="http://127.0.0.1:9000/common/model.gltf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=R4O9G1T7UA63H8DPH00X%2F20240414%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240414T082657Z&X-Amz-Expires=43200&X-Amz-Security-Token=eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NLZXkiOiJSNE85RzFUN1VBNjNIOERQSDAwWCIsImV4cCI6MTcxMzEyNjQwMywicGFyZW50IjoibWluaW9hZG1pbiJ9.PStNab9tkbWep3oAK3p4Cph1AMerzU-Ij8bZwHYfF2lLzpfFIb0E4seRSLexq57n27i8livQWNW48R0hlKMAqA&X-Amz-SignedHeaders=host&versionId=418338c3-d7f3-4322-87b0-164d0cce1f49&X-Amz-Signature=07f796598f3858632fd658d23c95af4695caddb780ad32508020c2996e2eedd0"*/}
+        {/*      position={[0, 1, 0]} scale={1}/>*/}
+        {/*    <OrbitControls/>*/}
+        {/*  </View>*/}
+
+        {/*  <Canvas*/}
+        {/*    frameloop="always"*/}
+        {/*    style={{position: 'fixed', top: 0, bottom: 0, left: 0, right: 0}}*/}
+        {/*    eventSource={document.getElementsByTagName("body")[0]}*/}
+        {/*  >*/}
+        {/*    <Common color="lightgray"/>*/}
+        {/*    <Model3d*/}
+        {/*      path="http://127.0.0.1:9000/common/model.gltf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=R4O9G1T7UA63H8DPH00X%2F20240414%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240414T082657Z&X-Amz-Expires=43200&X-Amz-Security-Token=eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NLZXkiOiJSNE85RzFUN1VBNjNIOERQSDAwWCIsImV4cCI6MTcxMzEyNjQwMywicGFyZW50IjoibWluaW9hZG1pbiJ9.PStNab9tkbWep3oAK3p4Cph1AMerzU-Ij8bZwHYfF2lLzpfFIb0E4seRSLexq57n27i8livQWNW48R0hlKMAqA&X-Amz-SignedHeaders=host&versionId=418338c3-d7f3-4322-87b0-164d0cce1f49&X-Amz-Signature=07f796598f3858632fd658d23c95af4695caddb780ad32508020c2996e2eedd0"*/}
+        {/*      position={[0, 1, 0]} scale={1}/>*/}
+        {/*    <OrbitControls/>*/}
+        {/*  </Canvas>*/}
+        {/*</Modal>*/}
+
+
+        <ModalForm<{
+          name: string;
+          company: string;
+        }>
+          title="新建表单"
+          trigger={
+            <Button type="primary">
+              新建表单
+            </Button>
+          }
+          autoFocusFirstInput
+          modalProps={{
+            destroyOnClose: true,
+            onCancel: () => console.log('run'),
+          }}
+          submitTimeout={2000}
         >
-          <p>some contents...</p>
-          <p>some contents...</p>
-          <p>some contents...</p>
-          <div style={{height: 250, width: 300}}>
-            <View className="view" style={{height: 250, width: 300, margin: 10}}>
+          <div style={{height: 500, width: 300}}>
+            <Canvas
+              frameloop="always"
+              style={{ top: 0, bottom: 0, left: 0, right: 0}}
+              eventSource={document.getElementsByTagName("body")[0]}
+            >
               <Common color="lightgray"/>
               <Model3d
-                path="http://localhost:9000/common/model.gltf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20240326%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240326T140234Z&X-Amz-Expires=86400&X-Amz-SignedHeaders=host&X-Amz-Signature=bb6c92f3d23cddcfc4f7d059d38be2b4d954937d93a14a0c357ff08c120c44bd"
+                path="http://127.0.0.1:9000/common/model.gltf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=R4O9G1T7UA63H8DPH00X%2F20240414%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20240414T082657Z&X-Amz-Expires=43200&X-Amz-Security-Token=eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3NLZXkiOiJSNE85RzFUN1VBNjNIOERQSDAwWCIsImV4cCI6MTcxMzEyNjQwMywicGFyZW50IjoibWluaW9hZG1pbiJ9.PStNab9tkbWep3oAK3p4Cph1AMerzU-Ij8bZwHYfF2lLzpfFIb0E4seRSLexq57n27i8livQWNW48R0hlKMAqA&X-Amz-SignedHeaders=host&versionId=418338c3-d7f3-4322-87b0-164d0cce1f49&X-Amz-Signature=07f796598f3858632fd658d23c95af4695caddb780ad32508020c2996e2eedd0"
                 position={[0, 1, 0]} scale={1}/>
               <OrbitControls/>
-            </View>
+            </Canvas>
           </div>
-        </Modal>
+        </ModalForm>
+
       </Card>
     </>
   );

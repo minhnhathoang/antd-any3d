@@ -56,9 +56,24 @@ export const errorConfig: RequestConfig = {
   },
 
   requestInterceptors: [
-    (config: RequestOptions) => {
-      const url = config?.url?.concat('?token = 123');
-      return {...config, url};
+    (url, options) => {
+      if (url.startsWith('/api')) {
+        const accessToken = localStorage.getItem('accessToken');
+        if (accessToken && !url.startsWith('/api/auth/login')) {
+          return {
+            url,
+            options: {
+              ...options,
+              interceptors: true,
+              headers: {...options.headers, Authorization: `Bearer ${accessToken}`}
+            },
+          };
+        }
+      }
+      return {url, options};
+    },
+    (url, options) => {
+      return {url, options};
     },
   ],
 
@@ -66,7 +81,7 @@ export const errorConfig: RequestConfig = {
     (response) => {
       const {data} = response as unknown as ResponseStructure;
       if (data?.success === false) {
-        message.error('Request failed!');
+        // message.error('Request failed!');
       }
       return response;
     },

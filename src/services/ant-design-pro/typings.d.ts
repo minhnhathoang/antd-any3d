@@ -5,11 +5,17 @@ type BaseResponse<T> = {
   success: boolean;
   errCode: string;
   errMessage: string;
-  data?: T;
+  data: T;
 }
 
 type AuthLoginQry = {
   username: string;
+  password: string;
+}
+
+type AuthRegisterCmd = {
+  username: string;
+  email: string;
   password: string;
 }
 
@@ -22,7 +28,7 @@ type AuthLoginCO = {
 }
 
 type UserCO = {
-  userId: number;
+  userId: string;
   username: string;
   email: string;
 }
@@ -32,6 +38,47 @@ type UserProfileCO = {
   avatar?: string;
   phone?: string;
   address?: string;
+}
+
+type ProjectCO = {
+  id: string;
+  owner: UserCO;
+  name: string;
+  description: string;
+  createdAt: string;
+}
+
+type ProjectAddCmd = {
+  name: string;
+  description: string;
+}
+
+type ProjectUpdateCmd = {
+  name: string;
+  description: string;
+}
+
+type HologramCO = {
+  id: string;
+  contentId: string;
+  pathUrl: string;
+  filename: string;
+  fileType: string;
+  fileSize: number;
+  createdAt: string;
+}
+
+type ARTargetCO = {
+  id: string;
+  contentId: string;
+}
+
+type ContentCO = {
+  id: string;
+  hologram: HologramCO;
+  arTarget: ARTargetCO;
+  owner: UserCO;
+  project: ProjectCO;
 }
 
 declare namespace API {

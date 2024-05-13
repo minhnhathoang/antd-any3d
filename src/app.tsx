@@ -1,25 +1,23 @@
-import {Footer, Question, SelectLang, AvatarDropdown, AvatarName} from '@/components';
+import {Footer, Question, SelectLang, AvatarDropdown, AvatarName, ProjectSelector} from '@/components';
 import {LinkOutlined} from '@ant-design/icons';
-import type {Settings as LayoutSettings} from '@ant-design/pro-components';
+import {PageLoading, Settings as LayoutSettings} from '@ant-design/pro-components';
 import {SettingDrawer} from '@ant-design/pro-components';
 import {RunTimeLayoutConfig} from '@umijs/max';
 import {history, Link} from '@umijs/max';
 import defaultSettings from '../config/defaultSettings';
 import {errorConfig} from './requestErrorConfig';
 import {getCurrentUser, getCurrentUserProfile} from '@/services/ant-design-pro/api';
-import React from 'react';
+import React, {Suspense} from 'react';
 
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/auth/login';
 
 import type {RequestConfig} from 'umi';
-import {Avatar} from "antd";
+import {Avatar, Progress, Spin} from "antd";
 import {Canvas} from "@react-three/fiber";
-import {View} from "@react-three/drei";
+import {Loader, useProgress, View} from "@react-three/drei";
+import AppNotification from "@/components/AppNotification";
 
-/**
- * @see https://umijs.org/zh-CN/plugins/plugin-initial-state
- * */
 export async function getInitialState(): Promise<{
   settings?: Partial<LayoutSettings>;
   currentUser?: UserCO;
@@ -28,6 +26,7 @@ export async function getInitialState(): Promise<{
   fetchCurrentUser?: () => Promise<UserCO | undefined>;
   fetchCurrentUserProfile?: () => Promise<UserProfileCO | undefined>;
 }> {
+
   const fetchCurrentUserProfile = async () => {
     try {
       const msg = await getCurrentUserProfile();
@@ -54,6 +53,7 @@ export async function getInitialState(): Promise<{
   if (![loginPath, '/auth/register', '/auth/register-result'].includes(location.pathname)) {
     const currentUser = await fetchCurrentUser();
     const currentUserProfile = await fetchCurrentUserProfile();
+
     return {
       fetchCurrentUser,
       fetchCurrentUserProfile,
@@ -62,6 +62,7 @@ export async function getInitialState(): Promise<{
       settings: defaultSettings as Partial<LayoutSettings>,
     };
   }
+
   return {
     fetchCurrentUserProfile,
     fetchCurrentUser,
@@ -71,8 +72,10 @@ export async function getInitialState(): Promise<{
 
 // ProLayout 支持的api https://procomponents.ant.design/components/layout
 export const layout: RunTimeLayoutConfig = ({initialState, setInitialState}) => {
+
   return {
-    actionsRender: () => [<Question key="doc"/>, <SelectLang key="SelectLang"/>],
+    actionsRender: () => [<ProjectSelector key="ProjectSelector"/>, <AppNotification key="Notification"/>,
+      <Question key="doc"/>, <SelectLang key="SelectLang"/>],
     avatarProps: {
       src: initialState?.currentUserProfile?.avatar,
       icon: <Avatar style={{
@@ -84,7 +87,6 @@ export const layout: RunTimeLayoutConfig = ({initialState, setInitialState}) => 
         return <AvatarDropdown>{avatarChildren}</AvatarDropdown>;
       },
     },
-
     footerRender: () => <Footer/>,
     onPageChange: () => {
       const {location} = history;
@@ -115,18 +117,21 @@ export const layout: RunTimeLayoutConfig = ({initialState, setInitialState}) => 
     ],
     links: isDev
       ? [
-        <Link key="openapi" to="/umi/plugin/openapi" target="_blank">
-          <LinkOutlined/>
-          <span>OpenAPI 文档</span>
-        </Link>,
+        // <Link key="openapi" to="/umi/plugin/openapi" target="_blank">
+        //   <LinkOutlined/>
+        //   <span>OpenAPI 文档</span>
+        // </Link>,
       ]
       : [],
     menuHeaderRender: undefined,
+    onMenuHeaderClick: () => {
+    },
+
     // 自定义 403 页面
     // unAccessible: <div>unAccessible</div>,
     // 增加一个 loading 的状态
     childrenRender: (children) => {
-      // if (initialState?.loading) return <PageLoading />;
+      if (initialState?.loading) return <PageLoading/>;
       return (
         <>
           {children}
@@ -146,11 +151,15 @@ export const layout: RunTimeLayoutConfig = ({initialState, setInitialState}) => 
 
           <Canvas
             frameloop="always"
+            gl={{alpha: true}}
             style={{position: 'fixed', top: 0, bottom: 0, left: 0, right: 0}}
-            eventSource={document.getElementsByTagName("html")[0]}>
-            <View.Port/>
+            eventSource={document.getElementsByTagName("body")[0]}>
+            <Suspense fallback={null}>
+              <View.Port/>
+            </Suspense>
+
           </Canvas>
-          {/*<CustomLoader />*/}
+          <Loader/>
         </>
       );
     },
@@ -158,25 +167,6 @@ export const layout: RunTimeLayoutConfig = ({initialState, setInitialState}) => 
   };
 };
 
-const authHeaderInterceptor = (url: string, options: RequestConfig) => {
-  const accessToken = localStorage.getItem('accessToken');
-
-  if (accessToken) {
-    return {
-      url,
-      options: {
-        ...options,
-        interceptors: true,
-        headers: {...options.headers, Authorization: `Bearer ${accessToken}`}
-      },
-    };
-  }
-
-  return {url, options};
-};
-
-
 export const request: RequestConfig = {
-  ...errorConfig,
-  requestInterceptors: [authHeaderInterceptor]
+  ...errorConfig
 };

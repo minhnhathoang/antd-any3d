@@ -54,6 +54,7 @@
     "@types/three": "^0.162.0",
     "@umijs/route-utils": "^2.2.2",
     "antd": "^5.13.2",
+    "antd-img-crop": "^4.21.0",
     "antd-style": "^3.6.1",
     "classnames": "^2.5.1",
     "leva": "^0.9.35",

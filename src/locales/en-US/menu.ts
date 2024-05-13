@@ -1,4 +1,9 @@
 export default {
+  'menu.project': "Project",
+  'menu.content': "Content",
+  'menu.metadata': "Metadata",
+
+
   'menu.welcome': 'Welcome',
   'menu.more-blocks': 'More Blocks',
   'menu.home': 'Home',
@@ -49,4 +54,5 @@ export default {
   'menu.editor.flow': 'Flow Editor',
   'menu.editor.mind': 'Mind Editor',
   'menu.editor.koni': 'Koni Editor',
+  'menu.preview': 'Preview',
 };

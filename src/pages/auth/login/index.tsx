@@ -1,16 +1,9 @@
 import {Footer} from '@/components';
-import {
-  LockOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
-import {
-  LoginForm,
-  ProFormCheckbox,
-  ProFormText,
-} from '@ant-design/pro-components';
+import {LockOutlined, UserOutlined,} from '@ant-design/icons';
+import {LoginForm, ProFormCheckbox, ProFormText,} from '@ant-design/pro-components';
 import {FormattedMessage, history, SelectLang, useIntl, useModel} from '@umijs/max';
-import {Alert, message, Tabs} from 'antd';
-import React, { useState} from 'react';
+import {Alert, Col, message, Row, Tabs, theme} from 'antd';
+import React, {useState} from 'react';
 import {flushSync} from 'react-dom';
 import {createStyles} from 'antd-style';
 import TitleLogo from "@/components/TitleLogo";
@@ -57,7 +50,7 @@ const Lang = () => {
   const {styles} = useStyles();
 
   return (
-    <div className={styles.lang} data-lang>
+    <div className={styles.lang}>
       {SelectLang && <SelectLang/>}
     </div>
   );
@@ -78,12 +71,18 @@ const LoginMessage: React.FC<{
   );
 };
 
+const {useToken} = theme;
+
+
 const Login: React.FC = () => {
   const [type, setType] = useState<string>('account');
   const [status, setStatus] = useState<boolean>(true);
   const {initialState, setInitialState} = useModel('@@initialState');
   const {styles} = useStyles();
   const intl = useIntl();
+
+  const {token} = useToken();
+
 
   const fetchCurrentUser = async () => {
     const currentUser = await initialState?.fetchCurrentUser?.();
@@ -155,17 +154,19 @@ const Login: React.FC = () => {
             await handleSubmit(values as AuthLoginQry)
           }}
           actions={
-            <ProFormText style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <p style={{display: 'inline-block', marginRight: '10px'}}>
-                Don&apos;t have an account yet?
-              </p>
-              <Link
-                to="/auth/register"
-                style={{display: 'inline-block', textAlign: 'center'}}
-              >
-                <span>Sign up</span>
-              </Link>
+            <ProFormText>
+              <Row justify="center" gutter={[8, 16]}>
+                <Col>
+                  <p>Don't have an account yet?</p>
+                </Col>
+                <Col>
+                  <Link to="/auth/register">
+                    <span>Sign up</span>
+                  </Link>
+                </Col>
+              </Row>
             </ProFormText>
+
           }
         >
           <Tabs

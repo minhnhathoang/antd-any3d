@@ -1,46 +1,44 @@
 ﻿/**
- * @name umi 的路由配置
- * @description 只支持 path,component,routes,redirect,wrappers,name,icon 的配置
- * @param path  path 只支持两种占位符配置，第一种是动态参数 :id 的形式，第二种是 * 通配符，通配符只能出现路由字符串的最后。
- * @param component 配置 location 和 path 匹配后用于渲染的 React 组件路径。可以是绝对路径，也可以是相对路径，如果是相对路径，会从 src/pages 开始找起。
- * @param routes 配置子路由，通常在需要为多个路径增加 layout 组件时使用。
- * @param redirect 配置路由跳转
- * @param wrappers 配置路由组件的包装组件，通过包装组件可以为当前的路由组件组合进更多的功能。 比如，可以用于路由级别的权限校验
- * @param name 配置路由的标题，默认读取国际化文件 menu.ts 中 menu.xxxx 的值，如配置 name 为 login，则读取 menu.ts 中 menu.login 的取值作为标题
- * @param icon 配置路由的图标，取值参考 https://ant.design/components/icon-cn， 注意去除风格后缀和大小写，如想要配置图标为 <StepBackwardOutlined /> 则取值应为 stepBackward 或 StepBackward，如想要配置图标为 <UserOutlined /> 则取值应为 user 或者 User
+ * @name umi’s routing configuration
+ * @description only supports path, component, routes, redirect, wrappers, name, icon configuration
+ * @param path path only supports two placeholder configurations, the first is in the form of dynamic parameter :id, and the second is * wildcard, which can only appear at the end of the routing string.
+ * @param component configures the React component path used for rendering after location and path match. It can be an absolute path or a relative path. If it is a relative path, it will be searched starting from src/pages.
+ * @param routes Configure sub-routes, usually used when you need to add layout components to multiple paths.
+ * @param redirect configure route jump
+ * @param wrappers Configure the packaging component of the routing component. Through the packaging component, you can combine more functions into the current routing component. For example, it can be used for routing-level permission verification.
+ * @param name Configure the title of the route. By default, the value of menu.xxxx in the internationalization file menu.ts is read. If the name is configured as login, the value of menu.login in menu.ts is read as the title.
+ * @param icon Configure the icon of the route. For the value, please refer to https://ant.design/components/icon-cn. Pay attention to removing the style suffix and capitalization. If you want to configure the icon as <StepBackwardOutlined />, the value should be stepBackward. or StepBackward, if you want to configure the icon as <UserOutlined />, the value should be user or User
  * @doc https://umijs.org/docs/guides/routes
  */
 export default [
   {
-    path: '/admin',
-    name: 'content',
-    icon: 'edit',
-    access: 'canAdmin',
-    routes: [
-      {
-        path: '/admin/sub-page',
-        name: 'asset',
-        component: './content/asset',
-      },
-      {
-        path: '/admin/assets',
-        name: 'metadata',
-        component: './projects',
-      },
-      // {
-      //   path: '/admin/sub-page',
-      //   name: 'editor',
-      //   component: './Admin',
-      // },
-      // {
-      //   icon: 'smile',
-      //   path: '/admin/sub-page',
-      //   name: 'access',
-      //   component: './Admin',
-      // },
-    ],
+    path: '/',
+    redirect: '/project',
   },
-
+  {
+    path: '/project',
+    name: 'project',
+    icon: 'appstoreAdd',
+    component: './project',
+  },
+  {
+    path: '/content',
+    name: 'content',
+    icon: 'codeSandbox',
+    component: './content',
+  },
+  {
+    path: '/metadata',
+    name: 'metadata',
+    icon: 'edit',
+    component: './content/asset',
+  },
+  {
+    path: '/preview',
+    name: 'preview',
+    icon: 'scan',
+    component: './preview',
+  },
   {
     path: '/auth',
     layout: false,
@@ -70,102 +68,14 @@ export default [
     ],
   },
   {
-    path: '/welcome',
-    name: 'welcome',
-    icon: 'smile',
-    component: './Welcome',
-  },
-  {
-    path: '/admin',
-    name: 'admin',
-    icon: 'crown',
-    access: 'canAdmin',
-    routes: [
-      {
-        path: '/admin',
-        redirect: '/admin/sub-page',
-      },
-      {
-        path: '/admin/sub-page',
-        name: 'sub-page',
-        component: './Admin',
-      },
-    ],
-  },
-  {
-    name: 'list.table-list',
-    icon: 'table',
-    path: '/list',
-    component: './TableList',
-  },
-  {
-    path: '/',
-    redirect: '/welcome',
+    name: 'account',
+    icon: 'user',
+    path: '/account',
+    component: './account'
   },
   {
     path: '*',
     layout: false,
     component: './404',
-  },
-
-  {
-    path: '/admin',
-    name: 'admin',
-    icon: 'edit',
-    access: 'canAdmin',
-    routes: [
-      {
-        path: '/admin',
-        redirect: '/admin/sub-page',
-      },
-      {
-        path: '/admin/sub-page',
-        name: 'sub-page',
-        component: './Admin',
-      },
-    ],
-  },
-
-  {
-    path: '/',
-    name: 'account',
-    icon: 'edit',
-    access: 'canAdmin',
-    routes: [
-      {
-        path: '/admin',
-        name: 'profile',
-        redirect: '/admin/sub-page',
-      },
-      {
-        path: '/admin/sub-page',
-        name: 'setting',
-        component: './Admin',
-      },
-    ],
-  },
-
-  {
-    name: 'account',
-    icon: 'user',
-    path: '/account',
-    routes: [
-      {
-        path: '/account',
-        redirect: '/account/center',
-      },
-      {
-        name: 'center',
-        icon: 'smile',
-        path: '/account/center',
-        component: './account/center',
-      },
-      {
-        name: 'settings',
-        icon: 'smile',
-        path: '/account/settings',
-        component: './account/settings',
-      },
-    ],
   },
 ];

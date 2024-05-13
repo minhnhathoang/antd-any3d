@@ -18,5 +18,8 @@ declare module 'react-fittext';
 declare module 'bizcharts-plugin-slider';
 declare module 'ws';
 declare module 'sockjs-client';
+declare module 'dva-core';
+declare module 'dva-loading';
+declare module '@umijs/plugin-model';
 
 declare const REACT_APP_ENV: 'test' | 'dev' | 'pre' | false;

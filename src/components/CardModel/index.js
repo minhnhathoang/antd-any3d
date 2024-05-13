@@ -1,6 +1,7 @@
-import {useState, useRef, useMemo} from 'react'
-import {Center, GizmoHelper, GizmoViewcube, GizmoViewport, Resize, useGLTF} from '@react-three/drei'
+import {useState, useRef, useMemo, Suspense} from 'react'
+import {Center, Clone, GizmoHelper, GizmoViewcube, GizmoViewport, Resize, useFBX, useGLTF} from '@react-three/drei'
 import {useFrame} from '@react-three/fiber'
+import {Spin} from "antd";
 
 export function Soda(props) {
   const ref = useRef()
@@ -64,30 +65,12 @@ export function Model3d(props) {
 
   useFrame((state, delta) => (scene.rotation.y += delta));
   return (
-    <Center>
-      <Resize scale={1}>
-        <primitive object={scene} {...props} />
-      </Resize>
-    </Center>
-  );
-}
-
-export function ModelAndTarget(props) {
-  const {path} = props;
-  const model = useGLTF(path);
-
-  const scene = useMemo(() => {
-    return model.scene.clone();
-  }, [model]);
-
-  useFrame((state, delta) => (scene.rotation.y += delta));
-  return (
-    <GizmoHelper
-      alignment="bottom-right"
-      margin={[80, 80]}
-    >
-      <GizmoViewport axisColors={['red', 'green', 'blue']} labelColor="black"/>
-      <GizmoViewcube/>
-    </GizmoHelper>
+    <Suspense fallback={<Spin tip="Loading" size="large"></Spin>}>
+      <Center>
+        <Resize>
+          <primitive object={scene} {...props} />
+        </Resize>
+      </Center>
+    </Suspense>
   );
 }
