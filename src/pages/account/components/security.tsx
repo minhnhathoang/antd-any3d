@@ -1,61 +1,85 @@
-import { List } from 'antd';
 import React from 'react';
-
-type Unpacked<T> = T extends (infer U)[] ? U : T;
-
-const passwordStrength = {
-  strong: <span className="strong">强</span>,
-  medium: <span className="medium">中</span>,
-  weak: <span className="weak">弱 Weak</span>,
-};
+import { ProForm, ProFormText } from '@ant-design/pro-components';
+import { message } from 'antd';
+import useStyles from './index.style';
+import {changePassword} from "@/api/user";
 
 const SecurityView: React.FC = () => {
-  const getData = () => [
-    {
-      title: '账户密码',
-      description: (
-        <>
-          当前密码强度：
-          {passwordStrength.strong}
-        </>
-      ),
-      actions: [<a key="Modify">修改</a>],
-    },
-    {
-      title: '密保手机',
-      description: `已绑定手机：138****8293`,
-      actions: [<a key="Modify">修改</a>],
-    },
-    {
-      title: '密保问题',
-      description: '未设置密保问题，密保问题可有效保护账户安全',
-      actions: [<a key="Set">设置</a>],
-    },
-    {
-      title: '备用邮箱',
-      description: `已绑定邮箱：ant***sign.com`,
-      actions: [<a key="Modify">修改</a>],
-    },
-    {
-      title: 'MFA 设备',
-      description: '未绑定 MFA 设备，绑定后，可以进行二次确认',
-      actions: [<a key="bind">绑定</a>],
-    },
-  ];
+  const { styles } = useStyles();
 
-  const data = getData();
+  const handleFinish = async (values: any) => {
+    if (values.newPassword !== values.confirmNewPassword) {
+      message.error('The new password and confirmation do not match');
+      return;
+    }
+
+    try {
+      const response = await changePassword(values.oldPassword, values.newPassword);
+      if (response.success) {
+        message.success('Password updated successfully');
+      } else {
+        message.error(response.errMessage || 'Failed to update password');
+      }
+    } catch (error) {
+      message.error('Failed to update password');
+    }
+  };
+
   return (
-    <>
-      <List<Unpacked<typeof data>>
-        itemLayout="horizontal"
-        dataSource={data}
-        renderItem={(item) => (
-          <List.Item actions={item.actions}>
-            <List.Item.Meta title={item.title} description={item.description} />
-          </List.Item>
-        )}
-      />
-    </>
+    <div>
+      <ProForm
+        layout="vertical"
+        onFinish={handleFinish}
+        submitter={{
+          searchConfig: {
+            submitText: 'Change Password',
+          },
+          render: (_, dom) => dom[1],
+        }}
+      >
+        <ProFormText.Password
+          width="md"
+          name="oldPassword"
+          label="Old Password"
+          rules={[
+            {
+              required: true,
+              message: 'Please enter your old password!',
+            },
+          ]}
+        />
+        <ProFormText.Password
+          width="md"
+          name="newPassword"
+          label="New Password"
+          rules={[
+            {
+              required: true,
+              message: 'Please enter your new password!',
+            },
+            {
+              min: 8,
+              message: 'New password must be at least 8 characters long!',
+            },
+          ]}
+        />
+        <ProFormText.Password
+          width="md"
+          name="confirmNewPassword"
+          label="Confirm New Password"
+          rules={[
+            {
+              required: true,
+              message: 'Please confirm your new password!',
+            },
+            {
+              min: 8,
+              message: 'New password must be at least 8 characters long!',
+            },
+          ]}
+        />
+      </ProForm>
+    </div>
   );
 };
 

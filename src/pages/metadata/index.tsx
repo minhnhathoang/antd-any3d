@@ -1,397 +1,250 @@
-import { addRule, removeRule, rule, updateRule } from '@/services/ant-design-pro/api';
-import { PlusOutlined } from '@ant-design/icons';
-import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
+import {PageContainer} from '@ant-design/pro-components';
+import {useModel} from '@umijs/max';
+import {Card, theme, Select, SelectProps, Spin, Button, Form, Space, Input, Typography} from 'antd';
+import React, {Suspense, useEffect, useMemo, useRef, useState} from 'react';
+
+import {EditOutlined, EllipsisOutlined, MinusCircleOutlined, PlusOutlined, SettingOutlined} from '@ant-design/icons';
+import {Avatar} from 'antd';
 import {
-  FooterToolbar,
-  ModalForm,
-  PageContainer,
-  ProDescriptions,
-  ProFormText,
-  ProFormTextArea,
-  ProTable,
-} from '@ant-design/pro-components';
-import { FormattedMessage, useIntl } from '@umijs/max';
-import { Button, Drawer, Input, message } from 'antd';
-import React, { useRef, useState } from 'react';
-import type { FormValueType } from './components/UpdateForm';
-import UpdateForm from './components/UpdateForm';
+  Environment,
+  OrbitControls,
+  PerspectiveCamera,
+  PivotControls,
+  Preload,
+  TransformControls,
+  useTexture, useVideoTexture,
+  View
+} from "@react-three/drei";
+import {Canvas, useFrame} from "@react-three/fiber";
+import AssetCard from "@/pages/content/asset/components/AssetCard";
+import {Image} from '@react-three/drei'
 
-/**
- * @en-US Add node
- * @zh-CN 添加节点
- * @param fields
- */
-const handleAdd = async (fields: API.RuleListItem) => {
-  const hide = message.loading('正在添加');
+
+import {memo} from 'react'
+import {
+  Grid,
+  Center,
+  GizmoHelper,
+  GizmoViewport,
+  AccumulativeShadows,
+  RandomizedLight,
+  useGLTF
+} from '@react-three/drei'
+import {useControls, button, folder} from 'leva'
+
+import debounce from 'lodash/debounce';
+import {sendGetContentListByPageQry} from "@/api/content";
+import {EnvironmentColor, GLTFModel, ImageComponent, Model3d} from "@/utils/r3fUtils";
+
+const {Meta} = Card;
+
+
+const tryParseJSON = (str: string) => {
   try {
-    await addRule({ ...fields });
-    hide();
-    message.success('Added successfully');
-    return true;
+    return JSON.parse(str);
   } catch (error) {
-    hide();
-    message.error('Adding failed, please try again!');
-    return false;
+    return null;
   }
 };
 
-/**
- * @en-US Update node
- * @zh-CN 更新节点
- *
- * @param fields
- */
-const handleUpdate = async (fields: FormValueType) => {
-  const hide = message.loading('Configuring');
-  try {
-    await updateRule({
-      name: fields.name,
-      desc: fields.desc,
-      key: fields.key,
-    });
-    hide();
 
-    message.success('Configuration is successful');
-    return true;
-  } catch (error) {
-    hide();
-    message.error('Configuration failed, please try again!');
-    return false;
-  }
-};
+interface ContentValue {
+  key: string;
+  label: string;
+  value: string;
+}
 
-/**
- *  Delete node
- * @zh-CN 删除节点
- *
- * @param selectedRows
- */
-const handleRemove = async (selectedRows: API.RuleListItem[]) => {
-  const hide = message.loading('正在删除');
-  if (!selectedRows) return true;
-  try {
-    await removeRule({
-      key: selectedRows.map((row) => row.key),
-    });
-    hide();
-    message.success('Deleted successfully and will refresh soon');
-    return true;
-  } catch (error) {
-    hide();
-    message.error('Delete failed, please try again');
-    return false;
-  }
-};
+const CustomOption = ({index, contentType, url, name}) => (
+  <div style={{display: 'flex', alignItems: 'center'}}>
+    {["image/jpeg", "image/png"].includes(contentType) && (
+      <img
+        src="/img_logo.svg"
+        style={{width: 20}}/>
+    )}
+    {["model/gltf-binary"].includes(contentType) && (
+      <img
+        src="/glb_logo.svg"
+        style={{width: 20}}
+      />
+    )}
+    {["model/gltf+json"].includes(contentType) && (
+      <img
+        src="/gltf_logo.svg"
+        style={{width: 20}}
+      />
+    )}
+    <span style={{marginLeft: 8, fontSize: 16}}>{index}. {name}</span>
+  </div>
+);
 
-const TableList: React.FC = () => {
-  /**
-   * @en-US Pop-up window of new window
-   * @zh-CN 新建窗口的弹窗
-   *  */
-  const [createModalOpen, handleModalOpen] = useState<boolean>(false);
-  /**
-   * @en-US The pop-up window of the distribution update window
-   * @zh-CN 分布更新窗口的弹窗
-   * */
-  const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
+const Metadata: React.FC = () => {
 
-  const [showDetail, setShowDetail] = useState<boolean>(false);
+  const {selectedProject} = useModel('project');
 
-  const actionRef = useRef<ActionType>();
-  const [currentRow, setCurrentRow] = useState<API.RuleListItem>();
-  const [selectedRowsState, setSelectedRows] = useState<API.RuleListItem[]>([]);
+  const {updateContent} = useModel('content');
 
-  /**
-   * @en-US International configuration
-   * @zh-CN 国际化配置
-   * */
-  const intl = useIntl();
+  const [contentValue, setContentValue] = useState<ContentValue>();
 
-  const columns: ProColumns<API.RuleListItem>[] = [
-    {
-      title: (
-        <FormattedMessage
-          id="pages.searchTable.updateForm.ruleName.nameLabel"
-          defaultMessage="Rule name"
-        />
-      ),
-      dataIndex: 'name',
-      tip: 'The rule name is the unique key',
-      render: (dom, entity) => {
-        return (
-          <a
-            onClick={() => {
-              setCurrentRow(entity);
-              setShowDetail(true);
-            }}
-          >
-            {dom}
-          </a>
+  const [options, setOptions] = useState<ContentValue[]>([]);
+  const [list, setList] = useState<Content[]>([]);
+
+  const [selectedContent, setSelectedContent] = useState<Content>();
+
+  const [metadata, setMetadata] = useState<{ [key: string]: string | number | object }>({});
+  const [key, setKey] = useState('');
+  const [value, setValue] = useState('');
+
+  const fetchContent = async (projectId: string) => {
+    try {
+      const res = await sendGetContentListByPageQry(projectId, 1, 10000);
+      if (res.success) {
+        const ans = res.data?.map((content) => ({
+          key: content.id,
+          label: content.name,
+          value: content.id
+        }));
+        setList(res.data ?? [])
+        console.log("fetchContent", ans)
+        return ans;
+      }
+    } catch (e) {
+      console.error(e);
+      return [];
+    }
+    return [];
+  };
+
+  const fetchOptions = (search) => {
+    if (!selectedProject) {
+      return Promise.resolve([]);
+    }
+    return fetchContent(selectedProject?.id);
+  };
+
+  useEffect(() => {
+    if (selectedProject) {
+      fetchOptions('').then((data) => {
+        setOptions(data);
+      });
+    }
+  }, [selectedProject]);
+
+  useEffect(() => {
+    if (contentValue) {
+      const content = list.find((content) => content.id === contentValue.key);
+      setSelectedContent(content);
+      if (content?.metadata) {
+        setMetadata(JSON.parse(content?.metadata));
+      } else {
+        setMetadata({});
+      }
+    }
+  }, [contentValue, list]);
+
+
+  const onFinish = async () => {
+    if (selectedContent) {
+      const res = await updateContent(selectedContent.id, {metadata: JSON.stringify(metadata)});
+      if (res?.success) {
+        const updatedContent = {...selectedContent, metadata: JSON.stringify(metadata)};
+        setSelectedContent(updatedContent);
+        setList(prevList =>
+          prevList.map(content =>
+            content.id === selectedContent.id ? updatedContent : content
+          )
         );
-      },
-    },
-    {
-      title: <FormattedMessage id="pages.searchTable.titleDesc" defaultMessage="Description" />,
-      dataIndex: 'desc',
-      valueType: 'textarea',
-    },
-    {
-      title: (
-        <FormattedMessage
-          id="pages.searchTable.titleCallNo"
-          defaultMessage="Number of service calls"
-        />
-      ),
-      dataIndex: 'callNo',
-      sorter: true,
-      hideInForm: true,
-      renderText: (val: string) =>
-        `${val}${intl.formatMessage({
-          id: 'pages.searchTable.tenThousand',
-          defaultMessage: ' 万 ',
-        })}`,
-    },
-    {
-      title: <FormattedMessage id="pages.searchTable.titleStatus" defaultMessage="Status" />,
-      dataIndex: 'status',
-      hideInForm: true,
-      valueEnum: {
-        0: {
-          text: (
-            <FormattedMessage
-              id="pages.searchTable.nameStatus.default"
-              defaultMessage="Shut down"
-            />
-          ),
-          status: 'Default',
-        },
-        1: {
-          text: (
-            <FormattedMessage id="pages.searchTable.nameStatus.running" defaultMessage="Running" />
-          ),
-          status: 'Processing',
-        },
-        2: {
-          text: (
-            <FormattedMessage id="pages.searchTable.nameStatus.online" defaultMessage="Online" />
-          ),
-          status: 'Success',
-        },
-        3: {
-          text: (
-            <FormattedMessage
-              id="pages.searchTable.nameStatus.abnormal"
-              defaultMessage="Abnormal"
-            />
-          ),
-          status: 'Error',
-        },
-      },
-    },
-    {
-      title: (
-        <FormattedMessage
-          id="pages.searchTable.titleUpdatedAt"
-          defaultMessage="Last scheduled time"
-        />
-      ),
-      sorter: true,
-      dataIndex: 'updatedAt',
-      valueType: 'dateTime',
-      renderFormItem: (item, { defaultRender, ...rest }, form) => {
-        const status = form.getFieldValue('status');
-        if (`${status}` === '0') {
-          return false;
-        }
-        if (`${status}` === '3') {
-          return (
-            <Input
-              {...rest}
-              placeholder={intl.formatMessage({
-                id: 'pages.searchTable.exception',
-                defaultMessage: 'Please enter the reason for the exception!',
-              })}
-            />
-          );
-        }
-        return defaultRender(item);
-      },
-    },
-    {
-      title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
-      dataIndex: 'option',
-      valueType: 'option',
-      render: (_, record) => [
-        <a
-          key="config"
-          onClick={() => {
-            handleUpdateModalOpen(true);
-            setCurrentRow(record);
-          }}
-        >
-          <FormattedMessage id="pages.searchTable.config" defaultMessage="Configuration" />
-        </a>,
-        <a key="subscribeAlert" href="https://procomponents.ant.design/">
-          <FormattedMessage
-            id="pages.searchTable.subscribeAlert"
-            defaultMessage="Subscribe to alerts"
-          />
-        </a>,
-      ],
-    },
-  ];
+      }
+    }
+  };
+
+  const handleAdd = () => {
+    if (key && value) {
+      const parsedValue = tryParseJSON(value); // Parse JSON if value is a valid JSON string
+      setMetadata({...metadata, [key]: parsedValue !== null ? parsedValue : value});
+      setKey('');
+      setValue('');
+    }
+  };
+
+  const handleRemove = (keyToRemove: string) => {
+    const updatedMetadata = {...metadata};
+    delete updatedMetadata[keyToRemove];
+    setMetadata(updatedMetadata);
+  };
+
+  const displayValue = (value: any) => {
+    if (typeof value === 'object') {
+      return JSON.stringify(value);
+    } else {
+      return value.toString();
+    }
+  };
 
   return (
     <PageContainer>
-      <ProTable<API.RuleListItem, API.PageParams>
-        headerTitle={intl.formatMessage({
-          id: 'pages.searchTable.title',
-          defaultMessage: 'Enquiry form',
-        })}
-        actionRef={actionRef}
-        rowKey="key"
-        search={{
-          labelWidth: 120,
+      <Select
+        showSearch
+        style={{width: "30%", marginBottom: 10}}
+        placeholder="Select content"
+        optionFilterProp="children"
+        filterOption={(input, option) => (option?.label ?? '').includes(input)}
+        filterSort={(optionA, optionB) =>
+          (optionA?.label ?? '').toLowerCase().localeCompare((optionB?.label ?? '').toLowerCase())
+        }
+        onChange={(value) => {
+          const content = list.find((content) => content.id === value);
+          setContentValue({key: value, label: content?.name, value: value});
         }}
-        toolBarRender={() => [
-          <Button
-            type="primary"
-            key="primary"
-            onClick={() => {
-              handleModalOpen(true);
-            }}
-          >
-            <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-          </Button>,
-        ]}
-        request={rule}
-        columns={columns}
-        rowSelection={{
-          onChange: (_, selectedRows) => {
-            setSelectedRows(selectedRows);
-          },
-        }}
-      />
-      {selectedRowsState?.length > 0 && (
-        <FooterToolbar
-          extra={
-            <div>
-              <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
-              <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
-              <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
-              &nbsp;&nbsp;
-              <span>
-                <FormattedMessage
-                  id="pages.searchTable.totalServiceCalls"
-                  defaultMessage="Total number of service calls"
-                />{' '}
-                {selectedRowsState.reduce((pre, item) => pre + item.callNo!, 0)}{' '}
-                <FormattedMessage id="pages.searchTable.tenThousand" defaultMessage="万" />
-              </span>
-            </div>
-          }
-        >
-          <Button
-            onClick={async () => {
-              await handleRemove(selectedRowsState);
-              setSelectedRows([]);
-              actionRef.current?.reloadAndRest?.();
-            }}
-          >
-            <FormattedMessage
-              id="pages.searchTable.batchDeletion"
-              defaultMessage="Batch deletion"
+        options={options}
+        optionRender={(oriOption, info) => {
+          const option = oriOption as ContentValue;
+          return (
+            <CustomOption
+              contentType={list.find((content) => content.id === option.key)?.hologram.contentType}
+              url={list.find((content) => content.id === option.key)?.hologram.url}
+              name={option.label}
+              index={info.index + 1}
             />
-          </Button>
-          <Button type="primary">
-            <FormattedMessage
-              id="pages.searchTable.batchApproval"
-              defaultMessage="Batch approval"
-            />
-          </Button>
-        </FooterToolbar>
-      )}
-      <ModalForm
-        title={intl.formatMessage({
-          id: 'pages.searchTable.createForm.newRule',
-          defaultMessage: 'New rule',
-        })}
-        width="400px"
-        open={createModalOpen}
-        onOpenChange={handleModalOpen}
-        onFinish={async (value) => {
-          const success = await handleAdd(value as API.RuleListItem);
-          if (success) {
-            handleModalOpen(false);
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
+          );
         }}
-      >
-        <ProFormText
-          rules={[
-            {
-              required: true,
-              message: (
-                <FormattedMessage
-                  id="pages.searchTable.ruleName"
-                  defaultMessage="Rule name is required"
-                />
-              ),
-            },
-          ]}
-          width="md"
-          name="name"
-        />
-        <ProFormTextArea width="md" name="desc" />
-      </ModalForm>
-      <UpdateForm
-        onSubmit={async (value) => {
-          const success = await handleUpdate(value);
-          if (success) {
-            handleUpdateModalOpen(false);
-            setCurrentRow(undefined);
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleUpdateModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        updateModalOpen={updateModalOpen}
-        values={currentRow || {}}
       />
 
-      <Drawer
-        width={600}
-        open={showDetail}
-        onClose={() => {
-          setCurrentRow(undefined);
-          setShowDetail(false);
-        }}
-        closable={false}
-      >
-        {currentRow?.name && (
-          <ProDescriptions<API.RuleListItem>
-            column={2}
-            title={currentRow?.name}
-            request={async () => ({
-              data: currentRow || {},
-            })}
-            params={{
-              id: currentRow?.name,
-            }}
-            columns={columns as ProDescriptionsItemProps<API.RuleListItem>[]}
+      <Space direction="vertical" style={{width: '100%'}}>
+        <Input.Group compact style={{marginBottom: 16}}>
+          <Input
+            placeholder="Key"
+            value={key}
+            onChange={(e) => setKey(e.target.value)}
+            style={{width: '30%'}}
           />
-        )}
-      </Drawer>
+          <Input
+            placeholder="Value"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            style={{width: '30%'}}
+          />
+          <Button type="primary" onClick={handleAdd}>Add</Button>
+        </Input.Group>
+
+        {Object.entries(metadata).map(([metadataKey, metadataValue]) => (
+          <Space key={metadataKey} style={{marginBottom: 10}}>
+            <Input value={metadataKey} readOnly/>
+            <Input value={displayValue(metadataValue)} readOnly/>
+            <MinusCircleOutlined style={{marginLeft: 10}} onClick={() => handleRemove(metadataKey)}/>
+          </Space>
+        ))}
+
+        <div>
+          <Typography.Text>JSON View:</Typography.Text>
+          <Typography style={{width: '60%'}}>
+            <pre>{JSON.stringify(metadata, null, 2)}</pre>
+          </Typography>
+        </div>
+
+        <Button type="primary" onClick={onFinish}>Save Metadata</Button>
+      </Space>
     </PageContainer>
   );
 };
 
-export default TableList;
+export default Metadata;

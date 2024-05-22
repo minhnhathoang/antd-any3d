@@ -51,13 +51,14 @@ export async function sendGetContentById(id: string) {
   });
 }
 
-export async function sendGetContentListByPageQry(projectId: string, pageIndex: number, pageSize: number) {
+export async function sendGetContentListByPageQry(projectId: string, pageIndex: number, pageSize: number, searchKey?: string) {
   return request<PageResponse<Content[]>>(`/api/contents`, {
     method: 'GET',
     params: {
       projectId,
       pageIndex,
-      pageSize
+      pageSize,
+      searchKey
     }
   });
 }

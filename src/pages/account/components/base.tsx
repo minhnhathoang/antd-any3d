@@ -11,21 +11,10 @@ import {useRequest} from '@umijs/max';
 import {Alert, Button, GetProp, Input, message, Upload, UploadFile, UploadProps} from 'antd';
 import React, {useState} from 'react';
 import useStyles from './index.style';
-import {getCurrentUserProfile, updateUserProfilePicture} from "@/api/userprofile";
+import {getCurrentUserProfile, updateUserProfile, updateUserProfilePicture} from "@/api/userprofile";
 import {useModel} from "@@/exports";
-
 import ImgCrop from 'antd-img-crop';
 import {Avatar} from 'antd/lib';
-
-const validatorPhone = (rule: any, value: string[], callback: (message?: string) => void) => {
-  if (!value[0]) {
-    callback('Please input your area code!');
-  }
-  if (!value[1]) {
-    callback('Please input your phone number!');
-  }
-  callback();
-};
 
 type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];
 
@@ -37,19 +26,8 @@ const getBase64 = (img: FileType, callback: (url: string) => void) => {
 
 const BaseView: React.FC = () => {
   const {styles} = useStyles();
-  const {initialState} = useModel('@@initialState');
+  const {initialState, setInitialState} = useModel('@@initialState');
   const {currentUser, currentUserProfile: currUserProfile} = initialState || {};
-
-
-  const [fileList, setFileList] = useState<UploadFile[]>([
-    {
-      uid: '-1',
-      name: 'image.png',
-      status: 'done',
-      url: 'https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png',
-    },
-  ]);
-
 
   const [loadingAvatar, setLoadingAvatar] = useState(false);
   const [imageUrl, setImageUrl] = useState<string>(currUserProfile?.avatar || "");
@@ -88,7 +66,6 @@ const BaseView: React.FC = () => {
     }
   };
 
-
   const onPreview = async (file: UploadFile) => {
     let src = file.url as string;
     if (!src) {
@@ -123,19 +100,35 @@ const BaseView: React.FC = () => {
     return isJpgOrPng && isLt2M;
   };
 
-
   const {data: currentUserProfile, loading} = useRequest(() => {
     return getCurrentUserProfile();
   });
 
+  const handleFinish = async (values: any) => {
+    console.log('handleFinish', values);
+    console.log('handleFinish', JSON.stringify(values));
+    try {
+      const response = await updateUserProfile(values);
+      if (response.success) {
+        message.success('Profile updated successfully');
 
-  const handleFinish = async () => {
-    message.success('Update basic information successfully');
+        setInitialState((prevState) => ({
+          ...prevState,
+          currentUserProfile: {
+            ...prevState?.currentUserProfile,
+            ...values,
+          },
+        }));
+      } else {
+        message.error('Failed to update profile');
+      }
+    } catch (error) {
+      message.error('Failed to update profile');
+    }
   };
+
   return (
     <div className={styles.baseView}>
-
-
       {loading ? null : (
         <>
           <div className={styles.left}>
@@ -151,9 +144,11 @@ const BaseView: React.FC = () => {
               initialValues={{
                 username: currentUser?.username,
                 email: currentUser?.email,
-                ...currentUserProfile,
+                name: currentUserProfile?.name,
+                address: currentUserProfile?.address,
+                phone: currentUserProfile?.phone,
               }}
-              hideRequiredMark
+              requiredMark={false}
             >
 
               <ProFormText
@@ -166,12 +161,7 @@ const BaseView: React.FC = () => {
                 width="md"
                 name="email"
                 label="Email"
-                rules={[
-                  {
-                    required: true,
-                    message: 'Please enter your email!',
-                  },
-                ]}
+                disabled={true}
               />
               <ProFormText
                 width="md"
@@ -184,77 +174,6 @@ const BaseView: React.FC = () => {
                   },
                 ]}
               />
-              <ProFormTextArea
-                name="about"
-                label="About"
-                placeholder="Say somthing"
-              />
-              <ProFormSelect
-                width="sm"
-                name="country"
-                label="Country/Region"
-                options={[
-                  {
-                    label: 'vn',
-                    value: 'Vietnam',
-                  },
-                ]}
-              />
-
-              {/*<ProForm.Group title="Province and City" size={8}>*/}
-              {/*  <ProFormSelect*/}
-              {/*    rules={[*/}
-              {/*      {*/}
-              {/*        required: false,*/}
-              {/*      },*/}
-              {/*    ]}*/}
-              {/*    width="sm"*/}
-              {/*    fieldProps={{*/}
-              {/*      labelInValue: true,*/}
-              {/*    }}*/}
-              {/*    name="province"*/}
-              {/*    className={styles.item}*/}
-              {/*    request={async () => {*/}
-              {/*      return queryProvince().then(({data}) => {*/}
-              {/*        return data.map((item) => {*/}
-              {/*          return {*/}
-              {/*            label: item.name,*/}
-              {/*            value: item.id,*/}
-              {/*          };*/}
-              {/*        });*/}
-              {/*      });*/}
-              {/*    }}*/}
-              {/*  />*/}
-              {/*  <ProFormDependency name={['province']}>*/}
-              {/*    {({province}) => {*/}
-              {/*      return (*/}
-              {/*        <ProFormSelect*/}
-              {/*          params={{*/}
-              {/*            key: province?.value,*/}
-              {/*          }}*/}
-              {/*          name="city"*/}
-              {/*          width="sm"*/}
-              {/*          disabled={!province}*/}
-              {/*          className={styles.item}*/}
-              {/*          request={async () => {*/}
-              {/*            if (!province?.key) {*/}
-              {/*              return [];*/}
-              {/*            }*/}
-              {/*            return queryCity(province.key || '').then(({data}) => {*/}
-              {/*              return data.map((item) => {*/}
-              {/*                return {*/}
-              {/*                  label: item.name,*/}
-              {/*                  value: item.id,*/}
-              {/*                };*/}
-              {/*              });*/}
-              {/*            });*/}
-              {/*          }}*/}
-              {/*        />*/}
-              {/*      );*/}
-              {/*    }}*/}
-              {/*  </ProFormDependency>*/}
-              {/*</ProForm.Group>*/}
-
               <ProFormText
                 width="md"
                 name="address"
@@ -265,28 +184,22 @@ const BaseView: React.FC = () => {
                   },
                 ]}
               />
-              <ProFormFieldSet
+              <ProFormText
+                width="md"
                 name="phone"
                 label="Phone"
                 rules={[
                   {
                     required: false,
-                  },
-                  {
-                    validator: validatorPhone,
-                  },
+                  }
                 ]}
               >
-                <Input className={styles.area_code}/>
-                <Input className={styles.phone_number}/>
-              </ProFormFieldSet>
+              </ProFormText>
             </ProForm>
           </div>
           <div className={styles.right}>
-
             <div className={styles.avatar_title}>Avatar</div>
             <div>
-
               {invalidAvatarMsg.length > 0 &&
                 <Alert
                   style={{
@@ -329,11 +242,11 @@ const BaseView: React.FC = () => {
                 </div>
               </Upload>
             </ImgCrop>
-
           </div>
         </>
       )}
     </div>
   );
 };
+
 export default BaseView;

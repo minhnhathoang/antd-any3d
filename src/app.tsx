@@ -1,38 +1,39 @@
 import {Footer, Question, SelectLang, AvatarDropdown, AvatarName, ProjectSelector} from '@/components';
-import {LinkOutlined} from '@ant-design/icons';
 import {PageLoading, Settings as LayoutSettings} from '@ant-design/pro-components';
 import {SettingDrawer} from '@ant-design/pro-components';
 import {RunTimeLayoutConfig} from '@umijs/max';
-import {history, Link} from '@umijs/max';
+import {history} from '@umijs/max';
 import defaultSettings from '../config/defaultSettings';
 import {errorConfig} from './requestErrorConfig';
-import {getCurrentUser, getCurrentUserProfile} from '@/services/ant-design-pro/api';
 import React, {Suspense} from 'react';
 
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/auth/login';
 
 import type {RequestConfig} from 'umi';
-import {Avatar, Progress, Spin} from "antd";
+import {Avatar} from "antd";
 import {Canvas} from "@react-three/fiber";
-import {Loader, useProgress, View} from "@react-three/drei";
+import {Loader, View} from "@react-three/drei";
 import AppNotification from "@/components/AppNotification";
+import {getCurrentUser} from "@/api/user";
+import {getCurrentUserProfile} from "@/api/userprofile";
+import {CustomLoader} from "@/components/CustomLoader";
 
 export async function getInitialState(): Promise<{
   settings?: Partial<LayoutSettings>;
-  currentUser?: UserCO;
-  currentUserProfile?: UserProfileCO;
+  currentUser?: User;
+  currentUserProfile?: UserProfile;
   loading?: boolean;
-  fetchCurrentUser?: () => Promise<UserCO | undefined>;
-  fetchCurrentUserProfile?: () => Promise<UserProfileCO | undefined>;
-}> {
+  fetchCurrentUser?: () => Promise<User | undefined>;
+  fetchCurrentUserProfile?: () => Promise<UserProfile | undefined>;
 
+}> {
   const fetchCurrentUserProfile = async () => {
     try {
       const msg = await getCurrentUserProfile();
       return msg.data;
     } catch (error) {
-
+      console.log("fetchCurrentUserProfile error", error)
     }
     return undefined;
   };
@@ -157,9 +158,9 @@ export const layout: RunTimeLayoutConfig = ({initialState, setInitialState}) => 
             <Suspense fallback={null}>
               <View.Port/>
             </Suspense>
-
           </Canvas>
-          <Loader/>
+          {/*<Loader/>*/}
+          <CustomLoader/>
         </>
       );
     },

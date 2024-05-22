@@ -10,6 +10,7 @@ import {Canvas} from "@react-three/fiber";
 import {EnvironmentColor} from "@/utils/r3fUtils";
 import {OrbitControls} from "@react-three/drei";
 import {formatBytes} from "@/utils/fileUtils";
+import Paragraph from "antd/lib/typography/Paragraph";
 
 const {Dragger} = Upload;
 
@@ -140,7 +141,7 @@ const ImageTargetView: React.FC<{
               <div style={{width: "70%", overflow: "hidden"}}>
                 <Row gutter={[12, 48]} style={{marginBottom: "12px"}}>
                   <Col span={8}><b>Vuforia Target ID</b></Col>
-                  <Col span={16}>{imageTarget.id}</Col>
+                  <Col span={16}><Paragraph strong={true} copyable={{ tooltips: false }}>{content.hologram.id}</Paragraph></Col>
                 </Row>
 
                 <Row gutter={[12, 48]} style={{marginBottom: "12px"}}>

@@ -31,7 +31,7 @@ export default [
     path: '/metadata',
     name: 'metadata',
     icon: 'edit',
-    component: './content/asset',
+    component: './metadata',
   },
   {
     path: '/preview',

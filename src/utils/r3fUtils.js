@@ -1,8 +1,10 @@
-import {Center, Environment, PerspectiveCamera, Resize, useGLTF} from "@react-three/drei";
-import React, {Suspense, useMemo} from "react";
+import {Center, Environment, PerspectiveCamera, Resize, useGLTF, useTexture} from "@react-three/drei";
+import React, {Suspense, useEffect, useMemo, useState} from "react";
 import {Color, TextureLoader} from "three";
 import {useFrame, useLoader} from "@react-three/fiber";
 import {Spin} from "antd";
+import {OBJLoader} from "three/examples/jsm/loaders/OBJLoader";
+import {GLTFLoader} from "three/examples/jsm/loaders/GLTFLoader";
 
 export const ImageComponent = ({ url }) => {
   const texture = useLoader(TextureLoader, url);
@@ -23,6 +25,26 @@ export const ImageComponent = ({ url }) => {
       <planeGeometry attach="geometry" args={[1, 1]} />
       <meshBasicMaterial attach="material" map={texture} toneMapped={false} />
     </mesh>
+  );
+};
+
+export const GLTFModel = ( props ) => {
+  const {url} = props;
+  const model = useGLTF(url);
+
+  const scene = useMemo(() => {
+    return model.scene.clone();
+  }, [model]);
+
+  return (
+    <Suspense fallback={<Spin tip="Loading" size="large"></Spin>}>
+      <Center>
+        <Resize>
+          {/* eslint-disable-next-line react/no-unknown-property */}
+          <primitive object={scene} {...props} />
+        </Resize>
+      </Center>
+    </Suspense>
   );
 };
 

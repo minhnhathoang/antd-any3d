@@ -1,5 +1,5 @@
 import React from "react";
-import {Row, Col} from "antd";
+import {Row, Col, Typography} from "antd";
 
 import {
   OrbitControls,
@@ -9,6 +9,10 @@ import {Model3d} from "@/components/CardModel";
 import {Canvas} from "@react-three/fiber";
 import {formatBytes} from "@/utils/fileUtils";
 import {EnvironmentColor} from "@/utils/r3fUtils.js";
+import Paragraph from "antd/lib/typography/Paragraph";
+
+const { Text, Link } = Typography;
+
 
 const DetailsView: React.FC<{
   content: Content;
@@ -88,8 +92,8 @@ const DetailsView: React.FC<{
         </Row>
 
         <Row gutter={[12, 48]} style={{marginBottom: "12px"}}>
-          <Col span={8}><b>Asset ID</b></Col>
-          <Col span={16}>{content.hologram.id}</Col>
+          <Col span={8}><b>Content ID</b></Col>
+          <Col span={16}><Paragraph strong={true} copyable={{ tooltips: false }}>{content.hologram.id}</Paragraph></Col>
         </Row>
       </div>
     </div>

@@ -32,8 +32,9 @@ import {useModel} from "@umijs/max";
 const {Paragraph} = Typography;
 
 const CardContent: React.FC<{
-  content: Content
-}> = ({content}) => {
+  content: Content,
+  onUpdateContent: (content: any) => void
+}> = ({content, onUpdateContent}) => {
 
   const {updateContent, deleteContent} = useModel('content')
 
@@ -47,7 +48,7 @@ const CardContent: React.FC<{
     setEditMode(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setEditMode(false);
     if (filename === content.name) {
       return;
@@ -56,7 +57,11 @@ const CardContent: React.FC<{
       setFilename(content.name);
       return;
     }
-    updateContent(content.id, {name: filename});
+    const res = await updateContent(content.id, {name: filename});
+    if (res?.success) {
+      content.name = filename;
+      onUpdateContent(content);
+    }
   };
 
   const editAndDelete = (key: string | number, currentItem: Content) => {
@@ -133,12 +138,11 @@ const CardContent: React.FC<{
                       style={{maxHeight: "100%", maxWidth: "100%"}}
                     />
                   )}
-
                   {content.hologram.contentType !== "image/jpeg" &&
                     content.hologram.contentType !== "image/png" &&
                     content.hologram.contentType !== "model/gltf+json" &&
                     content.hologram.contentType !== "model/gltf-binary" &&
-                    content.hologram.contentType !== "application/octet-stream" &&
+                    // content.hologram.contentType !== "application/octet-stream" &&
                     content.hologram.contentType !== "video/mp4" && (
                       <p>Unsupported file type</p>
                     )}
@@ -181,7 +185,9 @@ const CardContent: React.FC<{
                   size={"large"}
                   style={{fontSize: 28, minWidth: 300, maxWidth: 500}}
                   value={filename}
-                  onChange={(e) => setFilename(e.target.value)}
+                  onChange={(e) => {
+                    setFilename(e.target.value)
+                  }}
                   autoFocus
                   onPressEnter={handleSave}
                   onBlur={handleSave}

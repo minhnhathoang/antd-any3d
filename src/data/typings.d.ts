@@ -12,7 +12,7 @@ class PageResponse<T> extends BaseResponse<T> {
   success: boolean;
   errCode: string;
   errMessage: string;
-  data?: T;
+  data?: T[];
   totalCount: number;
   pageIndex: number;
   pageSize: number;

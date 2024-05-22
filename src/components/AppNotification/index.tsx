@@ -1,27 +1,23 @@
 import React, {useEffect, useState} from 'react';
 import {Client, IMessage, StompHeaders} from '@stomp/stompjs';
-import {notification} from 'antd';
+import {Avatar, notification} from 'antd';
 import {BellOutlined} from '@ant-design/icons';
-import {handleWebsocketMessage} from "@/components/AppNotification/eventHandler";
 import {useModel} from "@umijs/max";
-import {useFrame} from "@react-three/fiber";
+import moment from "moment";
 
 type NotificationType = 'success' | 'info' | 'warning' | 'error';
 
-
-type BaseEvent = {
-  id: string;
-  createdAt: string;
-  type: string;
-}
-
 const AppNotification: React.FC = () => {
+
+  const {initialState} = useModel('@@initialState');
 
   const [authenticated, setAuthenticated] = useState(false);
   const [api, contextHolder] = notification.useNotification();
 
+  const {notifications, addNotification, removeNotification, setTrigger, trigger} = useModel('noti');
+
   const {selectedProject} = useModel('project');
-  const {getContentListByPage, pageSize, pageIndex, setChanged } = useModel('content');
+  const {getContentListByPage, pageSize, pageIndex, setChanged} = useModel('content');
 
   const openNotification = (type: NotificationType, title: string, message: string) => {
     api[type]({
@@ -30,27 +26,42 @@ const AppNotification: React.FC = () => {
     });
   };
 
+  useEffect(() => {
+    console.log("AppNotification useEffect" + selectedProject);
+  }, [selectedProject]);
+
+  const extractEventType = (type: any) => {
+    const eventType = type.split('.').pop().replace('Event', '');
+    return eventType.replace(/([a-z])([A-Z])/g, '$1 $2');
+  };
+
+
   const handleWebsocketMessage = (message: IMessage) => {
     const body = JSON.parse(message.body);
     console.log('Received message:', body);
 
-    openNotification('info', body.type, body.message)
+    // openNotification('info', body.type, body.message)
 
-    console.log("current: ", JSON.stringify(selectedProject))
+    notification.info({
+      message: (
+        <div>
+          <span>{extractEventType(body.type)}</span>
+        </div>
+      ),
+      description: moment(body.createdAt).format('h:mm A'),
+      placement: 'topRight',
+      duration: 9
+    });
 
     if (body.type === 'org.nhathm.dto.domainevent.ContentCreatedEvent') {
-      setChanged(true);
+      addNotification(body);
+      setTrigger(!trigger);
     }
   }
 
   useEffect(() => {
-    console.log("selectedProject: ", selectedProject)
-  }, [selectedProject]);
-
-  useEffect(() => {
     const accessToken = localStorage.getItem('accessToken');
     if (!accessToken) {
-      // Nếu không xác thực, không tạo WebSocket
       return;
     }
 
@@ -92,7 +103,7 @@ const AppNotification: React.FC = () => {
         client.deactivate();
       }
     };
-  }, []);
+  }, [initialState?.currentUser, initialState?.loading]);
 
   // Nếu chưa xác thực, không hiển thị component
   if (!authenticated) {

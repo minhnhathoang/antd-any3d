@@ -2,35 +2,40 @@ import {useEffect, useState} from "react";
 import {
   sendCreateProject,
   sendDeleteProject,
-  sendGetProjectList,
   sendGetProjectListByOwner,
   sendUpdateProject
 } from "@/api/project";
 import {message} from "antd";
-import {useModel} from "@umijs/max";
 import {sendAddVuforiaKeyCmd, sendUpdateVuforiaKeyCmd} from "@/api/vuforia";
+import {useModel} from "@umijs/max";
+import useNotiModel from "@/models/noti";
 
 export default () => {
-  const [projectList, setProjectList] = useState<Project[] | null>([]);
 
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const {initialState} = useModel('@@initialState');
+
+  const [projectList, setProjectList] = useState<Project[]>([]);
+
+  const [selectedProject, setSelectedProject] = useState<Project | null>();
 
   const [projectListLoading, setProjectListLoading] = useState<boolean>(false);
   const [createProjectLoading, setCreateProjectLoading] = useState<boolean>(false);
   const [createProjectModalVisible, setCreateProjectModalVisible] = useState<boolean>(false);
-  const [currentProject, setCurrentProject] = useState<Project | null>(null);
+  const [currentProject, setCurrentProject] = useState<Project>();
+
+  const { notifications, addNotification, removeNotification } = useNotiModel();
 
   const selectProject = (projectId?: string) => {
-    if (!projectId) {
-      setSelectedProject(projectList.length > 0 ? projectList[0] : null);
+    if (!projectId || !projectList?.length) {
+      setSelectedProject(null);
+      return;
+    }
+    const project = projectList.find(project => project.id === projectId);
+    if (project) {
+      setSelectedProject(project);
+      message.info("Load project: " + project.name);
     } else {
-      const project = projectList.find(project => project.id === projectId);
-      if (project) {
-        setSelectedProject(project);
-        message.info("Load project: " + project.name);
-      } else {
-        setSelectedProject(null);
-      }
+      setSelectedProject(null);
     }
   };
 
@@ -40,20 +45,7 @@ export default () => {
       const res = await sendGetProjectListByOwner();
       if (res.success) {
         const newProjectList = res.data || [];
-
-        // Update project list state
         setProjectList(newProjectList);
-
-        // Check if the selected project is still in the new project list
-        if (selectedProject && !newProjectList.find(p => p.id === selectedProject.id)) {
-          // If selected project is not in the new list, deselect it and select a new one
-          setSelectedProject(null);
-          selectProject();
-        } else if (!selectedProject && newProjectList.length > 0) {
-          // If no selected project and there are projects in the list, select the first one
-          selectProject(newProjectList[0].id);
-        }
-
         return newProjectList;
       }
     } catch (e) {
@@ -63,13 +55,21 @@ export default () => {
   };
 
   useEffect(() => {
-    fetchProjectList();
-  }, []);
-
+    console.log("USEEFFEFT NOTI" + JSON.stringify(notifications));
+  }, [notifications]);
 
   useEffect(() => {
-    selectProject();
-  }, [projectList]);
+    setSelectedProject(null);
+    setProjectList([]);
+    fetchProjectList().then(r => {
+      if (selectedProject !== null && r?.find(p => p.id === selectedProject?.id) !== null) {
+        return;
+      }
+      if (r && r.length > 0) {
+        selectProject(r[0].id);
+      }
+    });
+  }, [initialState?.currentUser]);
 
   const createProject = async (project: ProjectCO) => {
     setCreateProjectLoading(true);
@@ -83,18 +83,15 @@ export default () => {
   };
 
   const updateProject = async (id: string, cmd: ProjectUpdateCmd) => {
-    try {
-      await sendUpdateProject(id, cmd);
-      await fetchProjectList();
-    } finally {
-
-    }
+    await sendUpdateProject(id, cmd);
+    await fetchProjectList();
   }
 
   const addVuforiaKey = async (projectId: string, cmd: VuforiaAddKeyCmd) => {
     cmd.projectId = projectId;
     try {
       await sendAddVuforiaKeyCmd(cmd);
+      message.success("Vuforia key added successfully");
       await fetchProjectList();
     } catch (e) {
       console.error("Error adding vuforia key");
@@ -105,6 +102,7 @@ export default () => {
     cmd.id = id;
     try {
       await sendUpdateVuforiaKeyCmd(cmd);
+      message.success("Vuforia key updated successfully");
       await fetchProjectList();
     } catch (e) {
       console.error("Error updating vuforia key");

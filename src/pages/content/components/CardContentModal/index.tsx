@@ -14,8 +14,10 @@ type CardContentState = {
 };
 
 const CartContentModal: React.FC<{
-  content: ContentCO
-}> = ({content}) => {
+  content: ContentCO,
+  onUpdateContent: (content: any) => void
+
+}> = ({content, onUpdateContent}) => {
   const {styles} = useStyles();
   const menuMap: Record<string, React.ReactNode> = {
     details: 'Details',
@@ -63,7 +65,7 @@ const CartContentModal: React.FC<{
     const {selectKey} = initConfig;
     switch (selectKey) {
       case 'details':
-        return <DetailsView content={content}/>;
+        return <DetailsView content={content} />;
       case 'metadata':
         return <MetadataView content={content}/>;
       case 'imageTarget':

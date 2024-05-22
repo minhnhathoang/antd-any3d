@@ -2,7 +2,7 @@ import {Footer} from '@/components';
 import {LockOutlined, UserOutlined,} from '@ant-design/icons';
 import {LoginForm, ProFormCheckbox, ProFormText,} from '@ant-design/pro-components';
 import {FormattedMessage, history, SelectLang, useIntl, useModel} from '@umijs/max';
-import {Alert, Col, message, Row, Tabs, theme} from 'antd';
+import {Alert, Col, message, Row, Tabs} from 'antd';
 import React, {useState} from 'react';
 import {flushSync} from 'react-dom';
 import {createStyles} from 'antd-style';
@@ -71,18 +71,12 @@ const LoginMessage: React.FC<{
   );
 };
 
-const {useToken} = theme;
-
-
 const Login: React.FC = () => {
   const [type, setType] = useState<string>('account');
   const [status, setStatus] = useState<boolean>(true);
   const {initialState, setInitialState} = useModel('@@initialState');
   const {styles} = useStyles();
   const intl = useIntl();
-
-  const {token} = useToken();
-
 
   const fetchCurrentUser = async () => {
     const currentUser = await initialState?.fetchCurrentUser?.();
@@ -157,6 +151,7 @@ const Login: React.FC = () => {
             <ProFormText>
               <Row justify="center" gutter={[8, 16]}>
                 <Col>
+                  {/* eslint-disable-next-line react/no-unescaped-entities */}
                   <p>Don't have an account yet?</p>
                 </Col>
                 <Col>

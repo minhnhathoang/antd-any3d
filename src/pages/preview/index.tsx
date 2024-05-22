@@ -1,6 +1,6 @@
 import {PageContainer} from '@ant-design/pro-components';
 import {useModel} from '@umijs/max';
-import {Card, theme, Select, SelectProps, Spin, Button} from 'antd';
+import {Card, theme, Select, SelectProps, Spin, Button, Typography} from 'antd';
 import React, {Suspense, useEffect, useMemo, useRef, useState} from 'react';
 
 import {EditOutlined, EllipsisOutlined, SettingOutlined} from '@ant-design/icons';
@@ -49,12 +49,38 @@ function FallbackMaterial({url}) {
   return <meshBasicMaterial map={texture} toneMapped={false}/>
 }
 
+const { Text, Link } = Typography;
+
+
 interface ContentValue {
   key: string;
   label: string;
   value: string;
+  contentType: string;
 }
 
+const CustomOption = ({index, contentType, url, name}) => (
+  <div style={{display: 'flex', alignItems: 'center'}}>
+    {["image/jpeg", "image/png"].includes(contentType) && (
+      <img
+        src="/img_logo.svg"
+        style={{width: 20}}/>
+    )}
+    {["model/gltf-binary"].includes(contentType) && (
+      <img
+        src="/glb_logo.svg"
+        style={{width: 20}}
+      />
+    )}
+    {["model/gltf+json"].includes(contentType) && (
+      <img
+        src="/gltf_logo.svg"
+        style={{width: 20}}
+      />
+    )}
+    <span style={{marginLeft: 8, fontSize: 16}}>{index}. {name}</span>
+  </div>
+);
 
 const Preview: React.FC = () => {
 
@@ -75,7 +101,8 @@ const Preview: React.FC = () => {
         const ans = res.data?.map((content) => ({
           key: content.id,
           label: content.name,
-          value: content.id
+          value: content.id,
+          contentType: content.hologram.contentType
         }));
         setList(res.data ?? [])
         console.log("fetchContent", ans)
@@ -94,32 +121,96 @@ const Preview: React.FC = () => {
     position: {x: 0, y: 0, z: 0}
   };
 
-  const [{scale, rotation, position}, set] = useControls(() => ({
-    Metadata: folder({
-      scale: selectedContent?.metadata?.scale || initialParams.scale,
+  const parseMetadata = (metadataString: string) => {
+    try {
+      return JSON.parse(metadataString);
+    } catch (error) {
+      return {};
+    }
+  };
+
+  const metadata = parseMetadata(selectedContent?.metadata);
+
+  const [newMetadata, setNewMetadata] = useState(metadata);
+
+  const updateMetadata = async () => {
+    if (selectedContent === undefined) {
+      console.error("No content selected" + JSON.stringify(selectedContent));
+      return;
+    }
+    const res = await updateContent(selectedContent.id, {
+      metadata: JSON.stringify(newMetadata)
+    });
+    if (res?.success) {
+      setSelectedContent({...selectedContent, metadata: JSON.stringify(newMetadata)});
+      setList(prevList =>
+        prevList.map(content =>
+          {
+            if (content.id === selectedContent.id) {
+              console.log("updateMetadata", content);
+              return {...content, metadata: JSON.stringify(newMetadata)};
+            }
+            return content;
+          }
+        )
+      );
+    }
+  }
+
+  const [{scale, rotation, position, mode}, set] = useControls(() => ({
+    "any3d-metadata": folder({
+      scale: {
+        value: metadata?.scale || initialParams.scale,
+        step: 0.1
+      },
       rotation: {
-        x: selectedContent?.metadata?.rotation?.x || initialParams.rotation.x,
-        y: selectedContent?.metadata?.rotation?.y || initialParams.rotation.y,
-        z: selectedContent?.metadata?.rotation?.z || initialParams.rotation.z,
+        value: {
+          x: metadata?.rotation?.x || initialParams.rotation.x,
+          y: metadata?.rotation?.y || initialParams.rotation.y,
+          z: metadata?.rotation?.z || initialParams.rotation.z,
+        },
+        step: 0.1
       },
       position: {
-        x: selectedContent?.metadata?.position?.x || initialParams.position.x,
-        y: selectedContent?.metadata?.position?.y || initialParams.position.y,
-        z: selectedContent?.metadata?.position?.z || initialParams.position.z,
+        value: {
+          x: metadata?.position?.x || initialParams.position.x,
+          y: metadata?.position?.y || initialParams.position.y,
+          z: metadata?.position?.z || initialParams.position.z,
+        },
+        step: 0.1
       },
     }),
-    Reset: button(() => {
+    "control-mode": folder({
+      mode: {
+        value: "translate",
+        options: ["translate", "rotate"]
+      }
+    }),
+    reset: button(() => {
       set({
         scale: initialParams.scale,
         rotation: {...initialParams.rotation},
         position: {...initialParams.position}
       });
     }),
-    Control: folder({
-      controlMode: 'translate',
-
+    update: button(() => {
+      updateMetadata();
     })
-  }));
+  }), [selectedContent, newMetadata]);
+
+  useEffect(() => {
+    if (selectedContent) {
+      setNewMetadata({
+        scale: scale,
+        rotation: {x: rotation.x, y: rotation.y, z: rotation.z},
+        position: {x: position.x, y: position.y, z: position.z}
+      });
+    }
+  }, [scale, position, rotation]);
+
+  useEffect(() => {
+    console.log("Trigger: content", selectedContent);
+  }, [selectedContent]);
 
   const fetchOptions = (search) => {
     if (!selectedProject) {
@@ -131,60 +222,71 @@ const Preview: React.FC = () => {
   useEffect(() => {
     if (selectedProject) {
       fetchOptions('').then((data) => {
-        setOptions(data);
+        setOptions(data.filter((content) => ["model/gltf+json", "model/gltf-binary"].includes(content.contentType)));
       });
     }
   }, []);
 
-  const [controlMode, setControlMode] = useState("translate");
-
   useEffect(() => {
-    if (contentValue) {
-      setSelectedContent(list.find((content) => content.id === contentValue.key));
+    if (selectedProject) {
+      fetchOptions('').then((data) => {
+        // just choose file model/gltf-json, model/gltf-binary
+        setOptions(data.filter((content) => ["model/gltf+json", "model/gltf-binary"].includes(content.contentType)));
+      });
     }
-  }, [contentValue]);
-
-  function adjustScale(width, height) {
-    const scaleFactor = 10;
-    const aspectRatio = width / height;
-    return [aspectRatio * scaleFactor, scaleFactor, 1];
-  }
+  }, [selectedProject]);
 
   return (
     <PageContainer>
       <Select
         showSearch
-        style={{width: 200}}
+        style={{width: "30%", marginBottom: 10}}
         placeholder="Select content"
         optionFilterProp="children"
         filterOption={(input, option) => (option?.label ?? '').includes(input)}
         filterSort={(optionA, optionB) =>
           (optionA?.label ?? '').toLowerCase().localeCompare((optionB?.label ?? '').toLowerCase())
         }
-        onChange={(value) => {
+        onChange={(value, options) => {
           const content = list.find((content) => content.id === value);
-          console.log("Selecte content: ", JSON.stringify(content));
-          setContentValue({key: value, label: content?.name, value: value});
+          if (!content) {
+            return;
+          }
+          setContentValue({key: value, label: content?.name, value: value, contentType: content.hologram.contentType});
+          console.log("onChange", value, content);
+
+          setSelectedContent(content);
+          set({
+            scale: parseMetadata(content.metadata)?.scale || initialParams.scale,
+            rotation: {
+              x: parseMetadata(content.metadata)?.rotation?.x || initialParams.rotation.x,
+              y: parseMetadata(content.metadata)?.rotation?.y || initialParams.rotation.y,
+              z: parseMetadata(content.metadata)?.rotation?.z || initialParams.rotation.z,
+            },
+            position: {
+              x: parseMetadata(content.metadata)?.position?.x || initialParams.position.x,
+              y: parseMetadata(content.metadata)?.position?.y || initialParams.position.y,
+              z: parseMetadata(content.metadata)?.position?.z || initialParams.position.z,
+            }
+          });
         }}
         options={options}
+        optionRender={(oriOption, info) => {
+          const option = oriOption as ContentValue;
+          return (
+            <CustomOption
+              contentType={list.find((content) => content.id === option.key)?.hologram.contentType}
+              url={list.find((content) => content.id === option.key)?.hologram.url}
+              name={option.label}
+              index={info.index + 1}
+            />
+          );
+        }}
       />
+
+      <div><Text>Only support previewing Holograms with .GLB, .GLTF formats</Text></div>
+
       <div style={{marginBottom: "20px"}}>
-        {/*<Button onClick={() => {*/}
-        {/*  console.log("translate" + JSON.stringify(selectedContent));*/}
-        {/*  if (selectedContent === undefined) {*/}
-        {/*    console.error("No content selected" + JSON.stringify(selectedContent));*/}
-        {/*    return;*/}
-        {/*  }*/}
-        {/*  updateContent(selectedContent.id, {*/}
-        {/*    metadata: JSON.stringify({*/}
-        {/*      scale,*/}
-        {/*      rotation,*/}
-        {/*      position*/}
-        {/*    })*/}
-        {/*  });*/}
-        {/*  setControlMode("translate")*/}
-        {/*}}>Move</Button>*/}
-        {/*<Button onClick={() => setControlMode("rotate")}>Rotate</Button>*/}
       </div>
 
       <Canvas
@@ -197,12 +299,38 @@ const Preview: React.FC = () => {
           />
         )}
         <TransformControls
-          mode={controlMode}
+          mode={mode}
           showX={true}
           showY={true}
           showZ={true}
           enabled={true}
           axis="XYZ"
+          position={[position.x, position.y, position.z]}
+          rotation={[rotation.x, rotation.y, rotation.z]}
+          scale={[scale, scale, scale]}
+
+          onMouseUp={(e) => {
+            if (e?.target?.object) {
+              const { position, rotation } = e.target.object;
+
+              const newPosition = {
+                x: parseFloat(position.x.toFixed(2)),
+                y: parseFloat(position.y.toFixed(2)),
+                z: parseFloat(position.z.toFixed(2))
+              };
+
+              const newRotation = {
+                x: parseFloat(rotation.x.toFixed(2)),
+                y: parseFloat(rotation.y.toFixed(2)),
+                z: parseFloat(rotation.z.toFixed(2))
+              };
+
+              set({
+                position: newPosition,
+                rotation: newRotation
+              });
+            }
+          }}
         >
           {selectedContent && (
             <Model3d path={selectedContent.hologram.url}/>

@@ -1,6 +1,6 @@
-import {DownOutlined, QuestionCircleOutlined, SearchOutlined, UserOutlined} from '@ant-design/icons';
+import {DownOutlined, QuestionCircleOutlined} from '@ant-design/icons';
 import {SelectLang as UmiSelectLang} from '@umijs/max';
-import {Button, Dropdown, Input, Menu, MenuProps, Space} from 'antd';
+import {Dropdown, Input, Menu} from 'antd';
 import React, {useEffect, useState} from 'react';
 import {useModel} from "umi";
 
@@ -35,7 +35,6 @@ export const Question = () => {
 export const ProjectSelector = () => {
   const {
     projectList,
-    fetchProjectList,
     selectedProject,
     selectProject
   } = useModel('project');
@@ -43,15 +42,13 @@ export const ProjectSelector = () => {
   const [searchValue, setSearchValue] = useState('');
   const [filteredMenuItems, setFilteredMenuItems] = useState(projectList);
 
-  useEffect(() => {
-    fetchProjectList();
-  }, []);
 
   useEffect(() => {
     setFilteredMenuItems(projectList);
-  }, [projectList]);
+    console.log('Project list updated: ' + JSON.stringify(selectedProject));
+  }, [selectedProject, projectList]);
 
-  const handleSearch = (e) => {
+  const handleSearch = (e: { target: { value: any; }; }) => {
     const {value} = e.target;
     setSearchValue(value);
 
@@ -72,7 +69,6 @@ export const ProjectSelector = () => {
       style={{maxHeight: 200, overflowY: 'auto'}}
       selectedKeys={[selectedProject?.id || '']}
       onClick={({key}) => {
-        console.log('Selecting project: ' + key);
         selectProject(key);
       }}
     >
@@ -82,7 +78,7 @@ export const ProjectSelector = () => {
         onChange={handleSearch}
         style={{marginBottom: 8}}
       />
-      {menuItems.map(item => (
+      {menuItems?.map(item => (
         <Menu.Item key={item.key}>{item.label}</Menu.Item>
       ))}
     </Menu>

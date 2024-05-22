@@ -4,7 +4,6 @@ import {sendDeleteContent, sendGetContentListByPageQry, sendUpdateContent} from 
 
 import {message} from "antd";
 import {useModel} from "@umijs/max";
-
 export default () => {
   const [pageContent, setPageContent] = useState<PageResponse<Content[]>>()
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -16,9 +15,10 @@ export default () => {
 
   const [changed, setChanged] = useState<boolean>(false);
 
+  const { notifications, trigger } = useModel('noti');
+
+
   const getContentListByPage = async (projectId: string, pageIndex: number, pageSize: number) => {
-    console.log("getContentListByPage", projectId, pageIndex, pageSize);
-    console.log("selectedProject", selectedProject);
     setRefreshing(true);
     try {
       const res = await sendGetContentListByPageQry(projectId, pageIndex, pageSize);
@@ -32,34 +32,50 @@ export default () => {
     }
   };
 
-  useEffect(() => {
-    if (changed) {
-      getContentListByPage(selectedProject?.id as string, pageIndex, pageSize);
-      setChanged(false);
+  const searchContent = async (projectId: string, pageIndex: number, pageSize: number, searchKey: string) => {
+    setRefreshing(true);
+    try {
+      const res = await sendGetContentListByPageQry(projectId, pageIndex, pageSize, searchKey);
+      if (res.success) {
+        setPageContent(res);
+        setPageIndex(res.pageIndex);
+        setPageSize(res.pageSize);
+      }
+    } finally {
+      setRefreshing(false);
     }
-  }, [changed]);
+  }
 
   useEffect(() => {
-    if (selectedProject) {
+    console.log("Trigger: content", trigger);
+  }, [trigger, notifications]);
+
+  useEffect(() => {
+    if (selectedProject?.id) {
       getContentListByPage(selectedProject.id, pageIndex, pageSize);
+    } else {
+      setPageIndex(1);
+      setPageSize(5);
+      setPageContent(undefined);
     }
-  }, [selectedProject, pageIndex, pageSize]);
+  }, [selectedProject]);
 
   const updateContent = async (id: string, body: ContentUpdateCmd) => {
     try {
-      await sendUpdateContent(id, body);
+      const res = await sendUpdateContent(id, body);
       message.info("Content updated successfully");
-      await getContentListByPage(selectedProject?.id as string, pageIndex, pageSize);
+      return res;
     } catch (e) {
       message.error("Failed to update content");
     }
+    return undefined;
   }
 
   const deleteContent = async (id: string) => {
     try {
       await sendDeleteContent(id);
       message.info("Content deleted successfully");
-      await getContentListByPage(selectedProject?.id as string, pageIndex, pageSize);
+      await getContentListByPage(selectedProject?.id, pageIndex, pageSize);
     } catch (e) {
       message.error("Failed to delete content");
     }
@@ -68,8 +84,11 @@ export default () => {
 
   return {
     pageContent,
+    setPageContent,
+
     refreshing,
     getContentListByPage,
+    searchContent,
     deleteContent,
 
     pageSize,

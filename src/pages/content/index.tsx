@@ -1,6 +1,6 @@
 import {PageContainer} from '@ant-design/pro-components';
 import {useModel} from '@umijs/max';
-import {Button, Flex, Input, Modal, Pagination, Spin} from 'antd';
+import {Alert, Button, Flex, Input, Modal, Pagination, Spin} from 'antd';
 import React, {Suspense, useEffect, useState} from 'react';
 import {FileAddOutlined, InboxOutlined} from '@ant-design/icons';
 import type {UploadProps} from 'antd';
@@ -8,6 +8,7 @@ import {message, Upload} from 'antd';
 import {sendCreatePresignedUploadUrl, uploadBinaryData} from "@/api/content";
 
 import CardContent from './components/CardContent';
+import {AlertProps} from "antd/es/alert/Alert";
 
 const {Dragger} = Upload;
 
@@ -16,32 +17,38 @@ const Content: React.FC = () => {
 
   const {
     getContentListByPage,
+    searchContent,
     pageContent,
+    setPageContent
   } = useModel('content');
+
+  const [alertProps, setAlertProps] = useState<AlertProps>({type: 'info', message: 'Please upload hologram to create new content.'})
 
   const props: UploadProps = {
     multiple: true,
     beforeUpload: async (file, fileList) => {
-      console.log("beforeUpload" + file.name);
-      const totalFiles = fileList.length + (pageContent?.data?.length || 0);
-      if (totalFiles > 5) {
-        message.error("You can only upload a maximum of 5 files.");
-        return Upload.LIST_IGNORE;
+      const projectId = selectedProject?.id;
+      if (projectId === null || projectId === undefined) {
+        setAlertProps({type: 'warning', message: 'Please select a project to upload content.'})
+        return false;
+      }
+      if (fileList.length > 5) {
+        setAlertProps({type: 'warning', message: 'You can only upload 5 files at a time.'})
+        return false;
       }
       return true;
     },
     customRequest: async (options: any) => {
       const {onSuccess, onError, file} = options;
-      const projectId = selectedProject?.id;
-      if (!projectId) {
-        message.error("Please select a project first");
-        onError(null, file);
-        return;
-      }
 
       try {
+        const projectId = selectedProject?.id;
+        if (projectId === null || projectId === undefined) {
+          onError(null, file);
+          return;
+        }
         const response = await sendCreatePresignedUploadUrl({
-          projectId: selectedProject.id,
+          projectId: projectId,
           hologramFileName: file.name
         });
         if (response.success) {
@@ -85,21 +92,46 @@ const Content: React.FC = () => {
   };
 
   const onChangePageIndex = (page: number, pageSize: number) => {
-    console.log("onChangePageIndex: " + page + " " + pageSize);
     setPageIndex(page);
     setPageSize(pageSize);
     getContentListByPage(selectedProject?.id as string, page, pageSize)
   }
 
+  const { notifications, addNotification, removeNotification } = useModel('noti');
+
   useEffect(() => {
     if (selectedProject?.id) {
-      console.log("selectedProject.id: " + selectedProject.id);
       getContentListByPage(selectedProject.id, pageIndex, pageSize)
     }
-  }, [selectedProject?.id]);
+  }, [selectedProject, notifications]);
+
+  useEffect(() => {
+
+  }, [pageContent]);
+
+  useEffect(() => {
+
+  }, [notifications]);
 
   const handleFormSubmit = (value: string) => {
-    console.log(value);
+    searchContent(selectedProject?.id as string, pageIndex, pageSize, value);
+  };
+
+  const handleUpdateContent = (updatedContent: any) => {
+    setPageContent(prevPageContent => {
+      const updatedData = (prevPageContent?.data || []).map(content =>
+        {
+          if (content.id === updatedContent.id) {
+            return updatedContent;
+          }
+          return content;
+        }
+      );
+      return {
+        ...prevPageContent,
+        data: updatedData
+      };
+    });
   };
 
   return (
@@ -121,6 +153,7 @@ const Content: React.FC = () => {
         </div>
       }
     >
+
       <div
         style={{
           borderRadius: 8,
@@ -140,7 +173,7 @@ const Content: React.FC = () => {
             </p>
             <p className="ant-upload-text">Click or drag file to this area to upload</p>
             <p className="ant-upload-hint">
-              Support for a single upload
+              Support for multiple uploads
             </p>
           </Dragger>
         </Modal>
@@ -149,19 +182,22 @@ const Content: React.FC = () => {
       {pageContent?.data?.length > 0 ? (<Suspense fallback={<Spin tip="Loading..." size="large"/>}>
         <Flex wrap="wrap" gap="large" style={{marginTop: 16}}>
           {pageContent?.data?.map((content, index) => (
-            <CardContent content={content} key={index}/>
+            <CardContent content={content} key={index} onUpdateContent={handleUpdateContent}/>
           ))}
         </Flex>
       </Suspense>) : (
-        <Dragger maxCount={5} {...props} style={{width: '100%', height: '100%'}}>
-          <p className="ant-upload-drag-icon">
-            <InboxOutlined/>
-          </p>
-          <p className="ant-upload-text">Click or drag file to this area to upload</p>
-          <p className="ant-upload-hint">
-            Support for a single upload
-          </p>
-        </Dragger>
+        <>
+          <Alert showIcon={true} type={alertProps.type} message={alertProps.message}/>
+          <Dragger maxCount={5} {...props} style={{width: '100%', height: '100%', marginTop: 20}}>
+            <p className="ant-upload-drag-icon">
+              <InboxOutlined/>
+            </p>
+            <p className="ant-upload-text">Click or drag file to this area to upload</p>
+            <p className="ant-upload-hint">
+              Support for multiple uploads
+            </p>
+          </Dragger>
+        </>
       )}
 
 
@@ -174,7 +210,6 @@ const Content: React.FC = () => {
         onChange={(page, pageSize) => onChangePageIndex(page, pageSize)}
         defaultPageSize={5}
         pageSizeOptions={['5', '10', '15', '20']}
-        hideOnSinglePage
       />
 
     </PageContainer>
